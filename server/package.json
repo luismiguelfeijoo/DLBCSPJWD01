@@ -3,13 +3,15 @@
   "version": "0.0.0",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "start": "node index.ts"
+    "start": "node index.ts",
+    "populate": "node scripts/populate-db.ts"
   },
   "dependencies": {
-    "@fastify/mongodb": "^10.0.0",
     "@fastify/one-line-logger": "^2.1.0",
     "fastify": "^5.10.0",
-    "fastify-plugin": "^6.0.0"
+    "fastify-plugin": "^6.0.0",
+    "mongoose": "^9.7.4",
+    "undici": "^8.7.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

@@ -1,4 +1,8 @@
 import Fastify from 'fastify';
+import mongoosePlugin from './plugins/mongoose-plugin/index.ts';
+import { User } from './models/user.ts';
+
+process.loadEnvFile();
 
 const fastify = Fastify({
   logger: {
@@ -8,8 +12,11 @@ const fastify = Fastify({
   }
 });
 
-fastify.get('/', async (request, reply) => {
-  return { hello: 'world' };
+fastify.register(mongoosePlugin, { url: process.env.MONGODB_URI });
+
+fastify.get('/users', async () => {
+  const users = await User.find();
+  return users;
 });
 
 /**
