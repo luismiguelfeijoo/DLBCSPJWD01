@@ -1,3 +1,14 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+/* 1. Import the core Material theme layout colors */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+/* 2. Standardize baseline document layout bounds */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+}

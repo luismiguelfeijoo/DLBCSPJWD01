@@ -1,0 +1,22 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Select an User</mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <mat-selection-list class="dark-list" multiple="false">
+      @for (user of users(); track user.email) {
+        <mat-list-option
+          [value]="user.name"
+          [selected]="user.name === selectedMemberName()"
+          mat-list-item
+          (click)="selectUser(user)"
+        >
+          <!-- Stacked Layout Lines -->
+          <span matListItemTitle class="member-name">{{ user.name }}</span>
+          <span matListItemLine class="member-email">{{ user.email }}</span>
+        </mat-list-option>
+      }
+    </mat-selection-list>
+  </mat-card-content>
+</mat-card>
