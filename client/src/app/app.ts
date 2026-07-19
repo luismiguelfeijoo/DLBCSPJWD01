@@ -4,8 +4,8 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { UserStore } from './store/user.store';
-import { UserService } from './service/user.service';
+import { UserStore } from './core/store/user.store';
+import { UserService } from './core/service/user.service';
 
 @Component({
   selector: 'app-root',
