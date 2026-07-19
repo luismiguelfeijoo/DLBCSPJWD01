@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import mongoosePlugin from './plugins/mongoose-plugin/index.ts';
+import cors from '@fastify/cors';
 import userRoutes from './routes/users.ts';
 
 process.loadEnvFile();
@@ -10,6 +11,13 @@ const fastify = Fastify({
       target: '@fastify/one-line-logger'
     }
   }
+});
+
+fastify.register(cors, {
+  // Only allow your Angular frontend to access the resources
+  origin: 'http://localhost:4200',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 });
 
 fastify.register(mongoosePlugin, { url: process.env.MONGODB_URI });
