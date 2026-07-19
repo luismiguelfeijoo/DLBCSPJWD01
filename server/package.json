@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "@fastify/mongodb": "^10.0.0",
+    "@fastify/one-line-logger": "^2.1.0",
+    "fastify": "^5.10.0",
+    "fastify-plugin": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node index.ts"
+  },
+  "type": "module"
+}
