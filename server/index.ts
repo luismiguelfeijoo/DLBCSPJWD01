@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import mongoosePlugin from './plugins/mongoose-plugin/index.ts';
-import { User } from './models/user.ts';
+import userRoutes from './routes/users.ts';
 
 process.loadEnvFile();
 
@@ -14,10 +14,7 @@ const fastify = Fastify({
 
 fastify.register(mongoosePlugin, { url: process.env.MONGODB_URI });
 
-fastify.get('/users', async () => {
-  const users = await User.find();
-  return users;
-});
+fastify.register(userRoutes, { prefix: '/users' });
 
 /**
  * Run the server!
