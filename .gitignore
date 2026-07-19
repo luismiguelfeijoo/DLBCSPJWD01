@@ -21,6 +21,9 @@ desktop.ini
 /node_modules/
 /package-lock.json
 /yarn.lock
+*/node_modules/
+*/package-lock.json
+*/yarn.lock
 
 # Environment files
 /.env
