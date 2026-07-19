@@ -1,0 +1,14 @@
+{
+  "name": "DLBCSPJWD01",
+  "version": "0.0.0",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "start": "concurrently -n \"client,server\" -c \"blue,green\" \"npm run start --workspace=client\" \"npm run start --workspace=server\""
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}
