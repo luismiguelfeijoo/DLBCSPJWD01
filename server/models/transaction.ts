@@ -1,7 +1,7 @@
 import { model, Schema, Types } from 'mongoose';
 
 // 1. Create a Schema corresponding to the document interface.
-const transactionSchema = new Schema(
+const TransactionSchema = new Schema(
   {
     userId: {
       type: Types.ObjectId,
@@ -42,4 +42,4 @@ const transactionSchema = new Schema(
 );
 
 // 2. Create a Model.
-export const Transaction = model('Transaction', transactionSchema);
+export const Transaction = model('Transaction', TransactionSchema);
