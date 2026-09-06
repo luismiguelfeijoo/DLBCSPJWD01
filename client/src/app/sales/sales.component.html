@@ -1,0 +1,61 @@
+<div class="flex justify-end mb-4">
+    <button mat-flat-button
+        class="!bg-indigo-600 !text-white hover:!bg-indigo-700 flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium shadow-sm transition-colors"
+        (click)="openNewSale()">
+        <mat-icon>add</mat-icon>
+        <span>Add New Sale</span>
+    </button>
+</div>
+
+<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table mat-table [dataSource]="sales()" class="w-full">
+
+        <!-- Description Column -->
+        <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef class="!text-slate-500 !font-semibold"> Description </th>
+            <td mat-cell *matCellDef="let transaction" class="!text-slate-800">
+                {{ transaction.description || 'N/A' }}
+            </td>
+        </ng-container>
+
+        <!-- Date Column -->
+        <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef class="!text-slate-500 !font-semibold"> Date </th>
+            <td mat-cell *matCellDef="let transaction" class="!text-slate-600">
+                {{ transaction.date | date:'short' }}
+            </td>
+        </ng-container>
+
+        <!-- Currency Column -->
+        <ng-container matColumnDef="currency">
+            <th mat-header-cell *matHeaderCellDef class="!text-slate-500 !font-semibold"> Currency </th>
+            <td mat-cell *matCellDef="let transaction">
+                <span
+                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 uppercase">
+                    {{ transaction.currency }}
+                </span>
+            </td>
+        </ng-container>
+
+        <!-- Amount Column -->
+        <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef class="!text-slate-500 !font-semibold text-right"> Amount </th>
+            <td mat-cell *matCellDef="let transaction" class="text-right font-medium text-slate-900">
+                {{ transaction.amount | currency:transaction.currency:'symbol':'1.2-2' }}
+            </td>
+        </ng-container>
+
+        <!-- Exchange Rate Column -->
+        <ng-container matColumnDef="liveExchangeRate">
+            <th mat-header-cell *matHeaderCellDef class="!text-slate-500 !font-semibold text-right"> Exchange Rate </th>
+            <td mat-cell *matCellDef="let transaction" class="text-right font-medium text-slate-900">
+                {{ transaction.liveExchangeRate | currency:baseCurrency():'symbol':'1.2-2' }}
+            </td>
+        </ng-container>
+
+        <!-- Header & Row Definitions -->
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-slate-50 transition-colors"></tr>
+
+    </table>
+</div>

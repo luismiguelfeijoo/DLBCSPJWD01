@@ -1,0 +1,93 @@
+<!-- <div class="max-w-lg mx-auto bg-white p-6 rounded-xl border border-slate-200 shadow-sm"> -->
+<div class="max-w-lg mx-auto p-6">
+  <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+    <mat-icon class="text-slate-600">receipt_long</mat-icon>
+    New Transaction
+  </h2>
+
+  <form [formGroup]="form" (ngSubmit)="onSave()" class="flex flex-col gap-4">
+    <!-- Description Field -->
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Description</mat-label>
+      <input
+        matInput
+        formControlName="description"
+        placeholder="e.g., POS Purchase, Adjustment..."
+      />
+      <mat-icon matSuffix class="!text-slate-400">description</mat-icon>
+      @if (form.controls.description.hasError('maxlength')) {
+        <mat-error>Description cannot exceed 100 characters</mat-error>
+      }
+    </mat-form-field>
+
+    <!-- Date & Time Row -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Date Picker Field -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Date</mat-label>
+        <input matInput [matDatepicker]="datepicker" formControlName="date" placeholder="Choose a date" />
+        <mat-datepicker-toggle matIconSuffix [for]="datepicker"></mat-datepicker-toggle>
+        <mat-datepicker #datepicker></mat-datepicker>
+        @if (form.controls.date.hasError('required')) {
+          <mat-error>Date is required</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- Time Picker Field -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Time</mat-label>
+        <input matInput [matTimepicker]="timepicker" formControlName="time" placeholder="Select time" />
+        <mat-timepicker-toggle matIconSuffix [for]="timepicker"></mat-timepicker-toggle>
+        <mat-timepicker #timepicker interval="30m"></mat-timepicker>
+        @if (form.controls.time.hasError('required')) {
+          <mat-error>Time is required</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <!-- Currency and Amount (Inline Row) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <!-- Currency Field -->
+      <mat-form-field appearance="outline" class="sm:col-span-1">
+        <mat-label>Currency</mat-label>
+        <mat-select formControlName="currency">
+          @for (c of currencies; track c) {
+            <mat-option [value]="c">{{ c }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.currency.hasError('required')) {
+          <mat-error>Select currency</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- Amount Field -->
+      <mat-form-field appearance="outline" class="sm:col-span-2">
+        <mat-label>Amount</mat-label>
+        <input matInput type="number" step="0.01" formControlName="amount" placeholder="0.00" />
+        <span matPrefix class="pl-2 pr-1 text-slate-500 font-medium">
+          {{ form.value.currency === 'USD' ? '$' : form.value.currency === 'EUR' ? '€' : '' }}
+        </span>
+        @if (form.controls.amount.hasError('required')) {
+          <mat-error>Amount is required</mat-error>
+        }
+        @if (form.controls.amount.hasError('min')) {
+          <mat-error>Amount must be greater than 0</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="flex justify-end gap-3 mt-4">
+      <button type="button" mat-button class="!text-slate-600" (click)="resetForm()">Reset</button>
+      <button
+        type="submit"
+        mat-flat-button
+        [disabled]="form.invalid"
+        class="!bg-indigo-600 !text-white hover:!bg-indigo-700 disabled:!bg-slate-300"
+      >
+        <mat-icon class="mr-1">add</mat-icon>
+        Save Transaction
+      </button>
+    </div>
+  </form>
+</div>
