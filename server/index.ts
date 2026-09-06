@@ -40,6 +40,7 @@ const start = async () => {
       throw new Error('Unable to connect to DB');
     }
     await mongoose.connect(process.env.MONGODB_URI);
+    mongoose.set('id', true);
     await fastify.listen({ port: 3000 });
   } catch (err) {
     fastify.log.error(err);

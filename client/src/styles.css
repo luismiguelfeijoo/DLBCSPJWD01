@@ -3,7 +3,7 @@
 @import 'tailwindcss';
 
 /* 1. Import the core Material theme layout colors */
-@import '@angular/material/prebuilt-themes/indigo-pink.css';
+@import '@angular/material/prebuilt-themes/azure-blue.css';
 
 /* 2. Standardize baseline document layout bounds */
 html,

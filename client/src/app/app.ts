@@ -5,7 +5,6 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { UserStore } from './core/store/user.store';
-import { UserService } from './core/service/user.service';
 
 @Component({
   selector: 'app-root',
@@ -18,7 +17,6 @@ import { UserService } from './core/service/user.service';
     MatIconModule,
     MatToolbarModule,
   ],
-  providers: [UserService, UserStore],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

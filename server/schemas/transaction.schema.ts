@@ -26,6 +26,7 @@ export const CreateTransactionSchema = Type.Object({
   liveExchangeRate: Type.Number({
     description: 'Snapshot of the exchange rate at the exact moment of sale',
   }),
+  date: Type.Optional(Type.String({ format: 'date-time' })),
   description: Type.Optional(Type.String()),
 });
 export type CreateTransaction = Type.Static<typeof CreateTransactionSchema>;

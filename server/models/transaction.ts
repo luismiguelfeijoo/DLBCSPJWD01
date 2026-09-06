@@ -1,7 +1,7 @@
 import { model, Schema, Types } from 'mongoose';
 
 // 1. Create a Schema corresponding to the document interface.
-const TransactionSchema = new Schema(
+const transactionSchema = new Schema(
   {
     userId: {
       type: Types.ObjectId,
@@ -31,15 +31,34 @@ const TransactionSchema = new Schema(
       required: true,
       comment: 'Snapshot of the rate at the exact moment of the sale'
     },
+    date: {
+      type: Date,
+      required: true,
+      default: Date.now,
+    },
     description: {
       type: String,
       trim: true
     }
   },
   {
-    timestamps: true // Gives you 'createdAt' which drives your History graphs
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        const { _id, __v, ...rest } = ret;
+        return rest;
+      }
+    },
+    toObject: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        const { _id, __v, ...rest } = ret;
+        return rest;
+      }
+    },
   }
 );
 
 // 2. Create a Model.
-export const Transaction = model('Transaction', TransactionSchema);
+export const Transaction = model('Transaction', transactionSchema);

@@ -12,8 +12,23 @@ const userSchema = new Schema(
       default: {}
     }
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        const { _id, __v, ...rest } = ret;
+        return rest;
+      }
+    },
+    toObject: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        const { _id, __v, ...rest } = ret;
+        return rest;
+      }
+    },
+  }
 );
-
 // 2. Create a Model.
 export const User = model('User', userSchema);

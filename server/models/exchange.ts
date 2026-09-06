@@ -36,7 +36,21 @@ const exchangeSchema = new Schema(
     }
   },
   {
-    timestamps: true
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        const { _id, __v, ...rest } = ret;
+        return rest;
+      }
+    },
+    toObject: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        const { _id, __v, ...rest } = ret;
+        return rest;
+      }
+    },
   }
 );
 

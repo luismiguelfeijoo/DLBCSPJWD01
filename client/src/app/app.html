@@ -1,44 +1,28 @@
-<mat-sidenav-container class="app-container">
-  <!-- Left Side Navigation Menu -->
-  <mat-sidenav mode="side" opened class="app-sidebar">
-    <div class="sidebar-header">
-      <h3>ExchangeX</h3>
-    </div>
-
-    <mat-nav-list>
+<mat-sidenav-container class="h-screen">
+  <!-- Vertical Sidebar -->
+  <mat-sidenav mode="side" opened
+    class="!w-22 border-r border-slate-200 p-4 !bg-[var(--mat-sys-primary-container)] !text-[var(--mat-sys-primary)]">
+    <mat-nav-list class="flex flex-col gap-4">
       <a mat-list-item routerLink="/sales" routerLinkActive="active-link">
         <mat-icon matListItemIcon>point_of_sale</mat-icon>
-        <span matListItemTitle>Sales</span>
       </a>
 
       <a mat-list-item routerLink="/exchange" routerLinkActive="active-link">
         <mat-icon matListItemIcon>currency_exchange</mat-icon>
-        <span matListItemTitle>Exchange</span>
       </a>
 
       <a mat-list-item routerLink="/history" routerLinkActive="active-link">
         <mat-icon matListItemIcon>bar_chart</mat-icon>
-        <span matListItemTitle>History Dashboard</span>
       </a>
 
       <a mat-list-item routerLink="/users" routerLinkActive="active-link">
         <mat-icon matListItemIcon>account_circle</mat-icon>
-        <span matListItemTitle>Users</span>
       </a>
     </mat-nav-list>
   </mat-sidenav>
 
-  <!-- Main View Content Area -->
-  <mat-sidenav-content class="app-content">
-    <mat-toolbar color="primary" class="app-toolbar">
-      <span>Dashboard Overview </span>
-      @if (selectedUser()) {
-        <span> - {{ selectedUser()?.name }}</span>
-      }
-    </mat-toolbar>
-
-    <div class="view-viewport">
-      <router-outlet></router-outlet>
-    </div>
+  <!-- Main Content Area -->
+  <mat-sidenav-content class="p-8 bg-slate-50 flex items-center justify-center">
+    <router-outlet></router-outlet>
   </mat-sidenav-content>
 </mat-sidenav-container>
