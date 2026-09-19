@@ -14,32 +14,44 @@ import { tapResponse } from '@ngrx/operators';
 import { Transaction } from '../model/transaction.model';
 import { TransactionService } from '../service/transaction.service';
 import { UserStore } from './user.store';
+import { CurrencyService } from '../service/currency.service';
+import { Currency } from '../model/currency.model';
+import { Rate } from '../model/rate.model';
 
 type TransactionsState = {
   _transactions: Transaction[];
+  currencies: Currency[];
+  rates: Rate[];
+  isLoadingCurrencies: boolean;
+  isLoadingRates: boolean;
   isLoading: boolean;
   isSaving: boolean;
 };
 
 const initialState: TransactionsState = {
   _transactions: [],
+  currencies: [],
+  rates: [],
+  isLoadingCurrencies: false,
+  isLoadingRates: false,
   isLoading: false,
   isSaving: false,
 };
 
 export const TransactionStore = signalStore(
   withState(initialState),
-  withProps((
-    _,
-    _transactionService = inject(TransactionService),
-    _userStore = inject(UserStore)
-  ) => ({ _transactionService, _userStore })),
+  withProps(
+    (
+      _,
+      _transactionService = inject(TransactionService),
+      _currencyService = inject(CurrencyService),
+      _userStore = inject(UserStore),
+    ) => ({ _transactionService, _currencyService, _userStore }),
+  ),
   withComputed(({ _transactions }) => ({
-    sales: computed(() =>
-      _transactions().filter((transaction) => transaction.type === 'sale')
-    ),
+    sales: computed(() => _transactions().filter((transaction) => transaction.type === 'sale')),
     adjustments: computed(() =>
-      _transactions().filter((transaction) => transaction.type === 'adjustment')
+      _transactions().filter((transaction) => transaction.type === 'adjustment'),
     ),
   })),
   withMethods((store) => ({
@@ -60,10 +72,32 @@ export const TransactionStore = signalStore(
               error: (error) => {
                 patchState(store, { isLoading: false });
               },
-            })
-          )
-        )
-      )
+            }),
+          ),
+        ),
+      ),
+    ),
+    loadCurrencies: rxMethod<void>(
+      pipe(
+        tap(() => {
+          patchState(store, { isLoadingCurrencies: true });
+        }),
+        switchMap(() =>
+          store._currencyService.getCurrencies().pipe(
+            tapResponse({
+              next: (currencies) => {
+                patchState(store, {
+                  isLoadingCurrencies: false,
+                  currencies,
+                });
+              },
+              error: (error) => {
+                patchState(store, { isLoadingCurrencies: false });
+              },
+            }),
+          ),
+        ),
+      ),
     ),
     registerSale: rxMethod<{
       description: string;
@@ -98,10 +132,10 @@ export const TransactionStore = signalStore(
                 error: (error) => {
                   patchState(store, { isSaving: false });
                 },
-              })
-            )
-        )
-      )
+              }),
+            ),
+        ),
+      ),
     ),
   })),
   withHooks({
@@ -109,6 +143,7 @@ export const TransactionStore = signalStore(
       const selectedUser = store._userStore.selectedUser();
       if (selectedUser?.id) {
         store.loadTransactions(selectedUser.id);
+        store.loadCurrencies();
       }
     },
   }),

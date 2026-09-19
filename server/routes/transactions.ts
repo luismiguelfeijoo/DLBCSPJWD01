@@ -8,7 +8,7 @@ import type { FastifyInstance } from 'fastify';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 
 const transactionRoutes = (fastify: FastifyInstance) => {
-  const server = fastify.withTypeProvider<TypeBoxTypeProvider>()
+  const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
   server.get(
     '/',
@@ -25,7 +25,7 @@ const transactionRoutes = (fastify: FastifyInstance) => {
       }
       const transactions = await Transaction.find({ userId });
       return reply.code(200).send(transactions);
-    }
+    },
   );
 
   server.post(
@@ -39,7 +39,7 @@ const transactionRoutes = (fastify: FastifyInstance) => {
       const transaction = new Transaction({ ...request.body });
       await transaction.save();
       return reply.code(200).send(transaction);
-    }
+    },
   );
 };
 

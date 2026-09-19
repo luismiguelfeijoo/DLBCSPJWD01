@@ -1,9 +1,11 @@
-import Fastify from 'fastify';
-import { type TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import cors from '@fastify/cors';
-import userRoutes from './routes/users.ts';
-import transactionRoutes from './routes/transactions.ts';
+import { type TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import Fastify from 'fastify';
 import mongoose from 'mongoose';
+import currencyPlugin from './plugins/currency.plugin.ts';
+import currencyRoutes from './routes/currency.ts';
+import transactionRoutes from './routes/transactions.ts';
+import userRoutes from './routes/users.ts';
 
 process.loadEnvFile();
 
@@ -14,22 +16,25 @@ const fastify = Fastify({
       target: 'pino-pretty',
       options: {
         translateTime: 'HH:MM:ss Z',
-        ignore: 'pid,hostname'
-      }
-    }
-  }
+        ignore: 'pid,hostname',
+      },
+    },
+  },
 }).withTypeProvider<TypeBoxTypeProvider>();
 
 fastify.register(cors, {
   // Add here the UI url to allow incoming traffic
   origin: process.env.ALLOWED_ORIGINS,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
 });
 
+fastify.register(currencyPlugin, {
+  baseUrl: process.env.EXCHANGE_API_URL,
+});
 fastify.register(userRoutes, { prefix: '/users' });
 fastify.register(transactionRoutes, { prefix: '/transactions' });
-
+fastify.register(currencyRoutes, { prefix: '/currencies' });
 
 /**
  * Run the server!
