@@ -10,7 +10,7 @@ import { MatTimepickerModule } from '@angular/material/timepicker';
 import { MatDialogRef } from '@angular/material/dialog';
 import { provideNativeDateAdapter } from '@angular/material/core';
 
-import { TransactionStore } from '../../core/store/transaction.store';
+import { TransactionStore } from '../../../core/store/transaction.store';
 
 @Component({
   selector: 'app-sales-form',
@@ -26,7 +26,6 @@ import { TransactionStore } from '../../core/store/transaction.store';
   ],
   providers: [provideNativeDateAdapter()],
   templateUrl: './sales-form.component.html',
-  styleUrl: './sales-form.component.css',
 })
 export class SalesFormComponent {
   private transactionStore = inject(TransactionStore);
@@ -72,12 +71,7 @@ export class SalesFormComponent {
 
     const fullTimestamp = new Date(dateObj);
     if (!isNaN(timeObj.getTime())) {
-      fullTimestamp.setHours(
-        timeObj.getHours(),
-        timeObj.getMinutes(),
-        timeObj.getSeconds(),
-        0
-      );
+      fullTimestamp.setHours(timeObj.getHours(), timeObj.getMinutes(), timeObj.getSeconds(), 0);
     }
 
     this.transactionStore.registerSale({

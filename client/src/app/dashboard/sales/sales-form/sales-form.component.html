@@ -1,4 +1,3 @@
-<!-- <div class="max-w-lg mx-auto bg-white p-6 rounded-xl border border-slate-200 shadow-sm"> -->
 <div class="max-w-lg mx-auto p-6">
   <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
     <mat-icon class="text-slate-600">receipt_long</mat-icon>
@@ -6,7 +5,6 @@
   </h2>
 
   <form [formGroup]="form" (ngSubmit)="onSave()" class="flex flex-col gap-4">
-    <!-- Description Field -->
     <mat-form-field appearance="outline" class="w-full">
       <mat-label>Description</mat-label>
       <input
@@ -20,12 +18,15 @@
       }
     </mat-form-field>
 
-    <!-- Date & Time Row -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <!-- Date Picker Field -->
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Date</mat-label>
-        <input matInput [matDatepicker]="datepicker" formControlName="date" placeholder="Choose a date" />
+        <input
+          matInput
+          [matDatepicker]="datepicker"
+          formControlName="date"
+          placeholder="Choose a date"
+        />
         <mat-datepicker-toggle matIconSuffix [for]="datepicker"></mat-datepicker-toggle>
         <mat-datepicker #datepicker></mat-datepicker>
         @if (form.controls.date.hasError('required')) {
@@ -33,10 +34,14 @@
         }
       </mat-form-field>
 
-      <!-- Time Picker Field -->
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Time</mat-label>
-        <input matInput [matTimepicker]="timepicker" formControlName="time" placeholder="Select time" />
+        <input
+          matInput
+          [matTimepicker]="timepicker"
+          formControlName="time"
+          placeholder="Select time"
+        />
         <mat-timepicker-toggle matIconSuffix [for]="timepicker"></mat-timepicker-toggle>
         <mat-timepicker #timepicker interval="30m"></mat-timepicker>
         @if (form.controls.time.hasError('required')) {
@@ -45,9 +50,7 @@
       </mat-form-field>
     </div>
 
-    <!-- Currency and Amount (Inline Row) -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <!-- Currency Field -->
       <mat-form-field appearance="outline" class="sm:col-span-1">
         <mat-label>Currency</mat-label>
         <mat-select formControlName="currency">
@@ -60,7 +63,6 @@
         }
       </mat-form-field>
 
-      <!-- Amount Field -->
       <mat-form-field appearance="outline" class="sm:col-span-2">
         <mat-label>Amount</mat-label>
         <input matInput type="number" step="0.01" formControlName="amount" placeholder="0.00" />
@@ -76,7 +78,6 @@
       </mat-form-field>
     </div>
 
-    <!-- Submit Button -->
     <div class="flex justify-end gap-3 mt-4">
       <button type="button" mat-button class="!text-slate-600" (click)="resetForm()">Reset</button>
       <button

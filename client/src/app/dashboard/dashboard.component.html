@@ -1,0 +1,67 @@
+<div class="flex flex-col h-screen overflow-hidden">
+  <mat-toolbar
+    color="primary"
+    class="shrink-0 flex justify-between items-center px-4 shadow-sm z-10"
+  >
+    <div class="flex items-center gap-3">
+      <span class="text-sm font-medium">{{ currentPageTitle() }}</span>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <span class="text-slate-300 font-light mx-2">|</span>
+
+      <mat-select
+        [formControl]="currencyControl"
+        (selectionChange)="onCurrencyChange($event.value)"
+        panelWidth="8rem"
+        class="currency-select w-24 px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white cursor-pointer"
+      >
+        @for (currency of currencies(); track currency.isoCode) {
+          <mat-option [value]="currency.isoCode">
+            <span class="font-bold mr-2 text-slate-700">{{ currency.isoCode }}</span>
+          </mat-option>
+        }
+      </mat-select>
+
+      <button mat-button [matMenuTriggerFor]="userMenu" class="flex items-center gap-2">
+        <mat-icon>account_circle</mat-icon>
+      </button>
+
+      <mat-menu #userMenu="matMenu">
+        <div class="px-4 py-2 border-b border-slate-100">
+          <p class="font-semibold text-sm">{{ selectedUser()?.name }}</p>
+          <p class="text-xs text-slate-500">{{ selectedUser()?.email }}</p>
+        </div>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Sign Out</span>
+        </button>
+      </mat-menu>
+    </div>
+  </mat-toolbar>
+
+  <mat-sidenav-container class="grow">
+    <mat-sidenav
+      [opened]="isSidenavOpen()"
+      mode="side"
+      class="custom-sidebar border-r border-slate-200 p-3 bg-[var(--mat-sys-primary-container)]"
+    >
+      <mat-nav-list class="flex flex-col gap-3">
+        @for (item of navItems; track item.path) {
+          <a
+            mat-list-item
+            [routerLink]="item.path"
+            routerLinkActive="active-link"
+            [attr.aria-label]="item.label"
+          >
+            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          </a>
+        }
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <mat-sidenav-content class="p-8 bg-slate-50">
+      <router-outlet></router-outlet>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

@@ -1,10 +1,23 @@
 import { Routes } from '@angular/router';
-import { UserComponent } from './user/user.component';
-import { SalesComponent } from './sales/sales.component';
 import { hasSelectedUserGuard } from './core/guards/user.guard';
+import { UserComponent } from './user/user.component';
 
 export const routes: Routes = [
-    { path: '', redirectTo: 'sales', pathMatch: 'full' },
-    { path: 'users', component: UserComponent },
-    { path: 'sales', component: SalesComponent, canActivate: [hasSelectedUserGuard] }
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: 'login', component: UserComponent },
+  {
+    path: 'dashboard',
+    loadComponent: () =>
+      import('./dashboard/dashboard.component').then((m) => m.DashboardComponent),
+    canActivate: [hasSelectedUserGuard],
+    children: [
+      { path: '', redirectTo: 'sales', pathMatch: 'full' },
+      {
+        path: 'sales',
+        loadComponent: () =>
+          import('./dashboard/sales/sales.component').then((m) => m.SalesComponent),
+      },
+    ],
+  },
+  { path: '**', redirectTo: 'dashboard', pathMatch: 'full' },
 ];

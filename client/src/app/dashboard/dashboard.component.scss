@@ -1,0 +1,11 @@
+.custom-sidebar {
+  // Overrides Material's internal container width token
+  --mat-sidenav-container-width: 80px;
+  width: 80px;
+}
+
+.currency-select {
+  ::ng-deep .mat-mdc-select-arrow-wrapper {
+    padding-left: 8px;
+  }
+}

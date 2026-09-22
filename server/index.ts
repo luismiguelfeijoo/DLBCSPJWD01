@@ -25,7 +25,7 @@ const fastify = Fastify({
 fastify.register(cors, {
   // Add here the UI url to allow incoming traffic
   origin: process.env.ALLOWED_ORIGINS,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 });
 

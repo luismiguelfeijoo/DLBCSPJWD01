@@ -10,19 +10,21 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { User } from '../model/user.model';
 import { UserService } from '../service/user.service';
 import { inject } from '@angular/core';
-import { pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, filter, pipe, switchMap, tap, withLatestFrom } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
 
 type UserState = {
   users: User[];
   selectedUser: User | null;
   isLoading: boolean;
+  isSaving: boolean;
 };
 
 const initialState: UserState = {
   users: [],
   selectedUser: null,
   isLoading: false,
+  isSaving: false,
 };
 
 export const UserStore = signalStore(
@@ -48,7 +50,31 @@ export const UserStore = signalStore(
         ),
       ),
     ),
-    selectUser: (user: User) => {
+    setBaseCurrency: rxMethod<string>(
+      pipe(
+        tap(() => {
+          patchState(store, { isSaving: true });
+        }),
+        switchMap((currency) => {
+          const user = store.selectedUser();
+          if (!user) {
+            return EMPTY;
+          }
+
+          return store._userService.updateBaseCurrency(user.id, currency).pipe(
+            tapResponse({
+              next: (selectedUser) => {
+                patchState(store, { isSaving: false, selectedUser });
+              },
+              error: (error) => {
+                patchState(store, { isSaving: false });
+              },
+            }),
+          );
+        }),
+      ),
+    ),
+    selectUser: (user: User | null) => {
       patchState(store, { selectedUser: user });
     },
   })),

@@ -11,4 +11,10 @@ export class UserService {
   getUsers(): Observable<User[]> {
     return this.httpClient.get<User[]>(this.baseUrl + '/users');
   }
+
+  updateBaseCurrency(userId: string, currency: string): Observable<User> {
+    return this.httpClient.patch<User>(this.baseUrl + '/users' + '/' + userId, {
+      baseCurrency: currency,
+    });
+  }
 }
