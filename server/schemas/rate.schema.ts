@@ -23,6 +23,18 @@ export const GetRatesQuerySchema = Type.Object({
       description: 'Optional date for historical rates',
     }),
   ),
+  from: Type.Optional(
+    Type.String({
+      format: 'date',
+      description: 'Optional from date for historical rates',
+    }),
+  ),
+  to: Type.Optional(
+    Type.String({
+      format: 'date',
+      description: 'Optional to date for historical rates',
+    }),
+  ),
 });
 export type GetRatesQuery = Type.Static<typeof GetRatesQuerySchema>;
 

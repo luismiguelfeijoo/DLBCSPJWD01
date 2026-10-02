@@ -7,6 +7,8 @@ export interface GetRatesOptions {
   baseCurrency: string;
   targetCurrency?: string;
   date?: string;
+  from?: string;
+  to?: string;
 }
 
 export const CurrencyService = (
@@ -36,7 +38,7 @@ export const CurrencyService = (
     return data;
   },
   async getExchangeRates(options: GetRatesOptions): Promise<RateResponse[]> {
-    const { baseCurrency, targetCurrency, date } = options;
+    const { baseCurrency, targetCurrency, date, from, to } = options;
 
     const base = baseCurrency.toUpperCase();
     const target = targetCurrency?.toUpperCase();
@@ -56,6 +58,12 @@ export const CurrencyService = (
     if (date) {
       // check if format is allowed
       url.searchParams.set('date', date);
+    }
+    if (!date && from) {
+      url.searchParams.set('from', from);
+    }
+    if (!date && to) {
+      url.searchParams.set('to', to);
     }
 
     const { statusCode, body } = await request(url.toString(), {

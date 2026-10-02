@@ -49,13 +49,15 @@ const currencyRoutes = (fastify: FastifyInstance) => {
     },
     async (request, reply) => {
       const { baseCurrency } = request.params;
-      const { targetCurrency, date } = request.query;
+      const { targetCurrency, date, from, to } = request.query;
 
       try {
         const rates = await fastify.currencyService.getExchangeRates({
           baseCurrency,
           targetCurrency,
           date,
+          from,
+          to,
         });
         return reply.code(200).send(rates);
       } catch (err: any) {

@@ -1,3 +1,5 @@
+import { computed, effect, inject } from '@angular/core';
+import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
   signalStore,
@@ -8,18 +10,17 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { computed, inject } from '@angular/core';
-import { pipe, switchMap, tap } from 'rxjs';
-import { tapResponse } from '@ngrx/operators';
-import { Transaction } from '../model/transaction.model';
-import { TransactionService } from '../service/transaction.service';
-import { UserStore } from './user.store';
-import { CurrencyService } from '../service/currency.service';
+import { EMPTY, pipe, switchMap, tap } from 'rxjs';
 import { Currency } from '../model/currency.model';
 import { Rate } from '../model/rate.model';
+import { Transaction } from '../model/transaction.model';
+import { CurrencyService } from '../service/currency.service';
+import { TransactionService } from '../service/transaction.service';
+import { UserStore } from './user.store';
 
 type TransactionsState = {
   _transactions: Transaction[];
+  targetCurrency: Currency | null;
   currencies: Currency[];
   rates: Rate[];
   isLoadingCurrencies: boolean;
@@ -30,6 +31,7 @@ type TransactionsState = {
 
 const initialState: TransactionsState = {
   _transactions: [],
+  targetCurrency: null,
   currencies: [],
   rates: [],
   isLoadingCurrencies: false,
@@ -48,14 +50,25 @@ export const TransactionStore = signalStore(
       _userStore = inject(UserStore),
     ) => ({ _transactionService, _currencyService, _userStore }),
   ),
-  withComputed(({ _transactions }) => ({
+  withComputed(({ _transactions, _userStore, currencies }) => ({
     sales: computed(() => _transactions().filter((transaction) => transaction.type === 'sale')),
     adjustments: computed(() =>
       _transactions().filter((transaction) => transaction.type === 'adjustment'),
     ),
+    baseCurrency: computed(() =>
+      currencies()?.find(
+        (currency) => currency.isoCode === _userStore.selectedUser()?.baseCurrency,
+      ),
+    ),
   })),
   withMethods((store) => ({
-    loadTransactions: rxMethod<string>(
+    setTargetCurrency: (targetCurrencyCode: string) => {
+      patchState(store, {
+        targetCurrency:
+          store.currencies()?.find((currency) => currency.isoCode === targetCurrencyCode) || null,
+      });
+    },
+    _loadTransactions: rxMethod<string>(
       pipe(
         tap(() => {
           patchState(store, { isLoading: true });
@@ -99,9 +112,43 @@ export const TransactionStore = signalStore(
         ),
       ),
     ),
+    _loadRates: rxMethod<string>(
+      pipe(
+        tap(() => {
+          patchState(store, { isLoadingRates: true });
+        }),
+        switchMap((targetCurrencyCode) => {
+          const baseCurrency = store.baseCurrency();
+          if (!baseCurrency) {
+            return EMPTY;
+          }
+          const fromDate = new Date();
+          fromDate.setDate(fromDate.getDate() - 7);
+          return store._currencyService
+            .getExchangeRates(baseCurrency.isoCode, {
+              targetCurrency: targetCurrencyCode,
+              from: fromDate.toISOString().split('T')[0],
+            })
+            .pipe(
+              tapResponse({
+                next: (rates) => {
+                  patchState(store, {
+                    isLoadingRates: false,
+                    rates,
+                  });
+                },
+                error: (error) => {
+                  patchState(store, { isLoadingRates: false });
+                },
+              }),
+            );
+        }),
+      ),
+    ),
     registerSale: rxMethod<{
       description: string;
       date: string;
+      baseCurrency: string;
       currency: string;
       amount: number;
       exchangeRate: number;
@@ -110,16 +157,17 @@ export const TransactionStore = signalStore(
         tap(() => {
           patchState(store, { isSaving: true });
         }),
-        switchMap(({ description, date, currency, amount, exchangeRate }) =>
+        switchMap(({ description, date, currency, amount, exchangeRate, baseCurrency }) =>
           store._transactionService
             .createTransaction({
               description,
               date,
+              baseCurrency,
               currency,
               amount,
               userId: store._userStore.selectedUser()?.id!,
               type: 'sale',
-              liveExchangeRate: exchangeRate,
+              exchangeRate,
             })
             .pipe(
               tapResponse({
@@ -142,9 +190,18 @@ export const TransactionStore = signalStore(
     onInit: (store) => {
       const selectedUser = store._userStore.selectedUser();
       if (selectedUser?.id) {
-        store.loadTransactions(selectedUser.id);
+        store._loadTransactions(selectedUser.id);
         store.loadCurrencies();
       }
+
+      effect(() => {
+        const targetCurrency = store.targetCurrency();
+        if (targetCurrency?.isoCode) {
+          store._loadRates(targetCurrency.isoCode);
+        } else {
+          patchState(store, { rates: [] });
+        }
+      });
     },
   }),
 );

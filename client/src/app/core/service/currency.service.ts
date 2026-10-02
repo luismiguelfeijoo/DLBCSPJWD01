@@ -2,8 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { Currency } from '../model/currency.model';
-import { Rate } from '../model/rate.model';
 import { CurrencyDTO } from '../model/dto/currency.dto.model';
+import { RateDTO } from '../model/dto/rate.dto.model';
+import { Rate } from '../model/rate.model';
 
 @Service()
 export class CurrencyService {
@@ -18,19 +19,14 @@ export class CurrencyService {
 
   getExchangeRates(
     baseCurrency: string,
-    targetCurrency?: string,
-    date?: string,
+    inputParams?: { targetCurrency?: string; date?: string; from?: string; to?: string },
   ): Observable<Rate[]> {
-    const params: { targetCurrency?: string; date?: string } = {};
-    if (targetCurrency) {
-      params.targetCurrency = targetCurrency;
-    }
-    if (date) {
-      params.date = date;
-    }
-    return this.httpClient.get<Rate[]>(`${this.baseUrl}/currencies/${baseCurrency}/rates`, {
-      params,
-    });
+    const params = { ...inputParams };
+    return this.httpClient
+      .get<RateDTO[]>(`${this.baseUrl}/currencies/${baseCurrency}/rates`, {
+        params,
+      })
+      .pipe(map((dtos) => dtos.map(this.mapRateDTO)));
   }
 
   private mapCurrencyDTO(dto: CurrencyDTO): Currency {
@@ -40,6 +36,15 @@ export class CurrencyService {
       name: dto.name,
       symbol: dto.symbol,
       startDate: dto.start_date,
+    };
+  }
+
+  private mapRateDTO(dto: RateDTO): Rate {
+    return {
+      base: dto.base,
+      quote: dto.quote,
+      date: dto.date,
+      rate: dto.rate,
     };
   }
 }

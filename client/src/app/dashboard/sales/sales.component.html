@@ -41,16 +41,16 @@
         Amount
       </th>
       <td mat-cell *matCellDef="let transaction" class="text-right font-medium text-slate-900">
-        {{ transaction.amount | currency: transaction.currency : 'symbol' : '1.2-2' }}
+        {{ transaction.amount }} {{ transaction.currencySymbol }}
       </td>
     </ng-container>
 
-    <ng-container matColumnDef="liveExchangeRate">
+    <ng-container matColumnDef="exchangeRate">
       <th mat-header-cell *matHeaderCellDef class="!text-slate-500 !font-semibold text-right">
         Exchange Rate
       </th>
       <td mat-cell *matCellDef="let transaction" class="text-right font-medium text-slate-900">
-        {{ transaction.liveExchangeRate | currency: baseCurrency() : 'symbol' : '1.2-2' }}
+        {{ transaction.exchangeRateLabel }}
       </td>
     </ng-container>
 

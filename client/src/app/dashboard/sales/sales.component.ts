@@ -1,5 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, computed, inject, Injector } from '@angular/core';
+import { Component, computed, effect, inject, Injector } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -29,18 +29,47 @@ export class SalesComponent {
   private injector = inject(Injector);
 
   isLoading = this.transactionStore.isLoading;
-  sales = this.transactionStore.sales;
+
+  sales = computed(() =>
+    this.transactionStore.sales().map((sale) => {
+      const currency = this.transactionStore.currencies().find((c) => c.isoCode === sale.currency);
+      const baseCurrency = this.transactionStore
+        .currencies()
+        .find((c) => c.isoCode === sale.baseCurrency);
+
+      return {
+        ...sale,
+        currencySymbol: currency?.symbol ?? '',
+        exchangeRateLabel: `1${baseCurrency?.symbol} = ${sale.exchangeRate}${currency?.symbol}`,
+      };
+    }),
+  );
   baseCurrency = computed(() => this.userStore.selectedUser()?.baseCurrency);
-  displayedColumns = ['amount', 'currency', 'liveExchangeRate', 'date', 'description'];
+  displayedColumns = ['date', 'description', 'amount', 'currency', 'exchangeRate'];
 
   openNewSale() {
     let dialogRef = this.dialog.open(SalesFormComponent, {
-      height: '600px',
-      width: '800px',
+      height: '80vh',
+      width: '80vw',
+      // maxWidth: '80vw',
       injector: this.injector,
     });
+
+    let saveStarted = false;
+    const saveEffect = effect(
+      (result) => {
+        if (this.transactionStore.isSaving()) {
+          saveStarted = true;
+          return;
+        }
+        if (saveStarted && !this.transactionStore.isSaving()) {
+          dialogRef.close();
+        }
+      },
+      { injector: this.injector },
+    );
     dialogRef.afterClosed().subscribe((result) => {
-      console.log(`CLOSED`);
+      saveEffect.destroy();
     });
   }
 }

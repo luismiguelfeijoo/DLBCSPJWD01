@@ -1,10 +1,7 @@
 import { Type } from 'typebox';
 
 // Enum schema for transaction type
-export const TransactionTypeSchema = Type.Union([
-  Type.Literal('sale'),
-  Type.Literal('adjustment'),
-]);
+export const TransactionTypeSchema = Type.Union([Type.Literal('sale'), Type.Literal('adjustment')]);
 export type TransactionType = Type.Static<typeof TransactionTypeSchema>;
 
 // Payload schema for creating a transaction, will validate a wrong user input
@@ -19,11 +16,15 @@ export const CreateTransactionSchema = Type.Object({
     minimum: 0,
     description: 'Amount cannot be negative',
   }),
+  baseCurrency: Type.String({
+    minLength: 1,
+    description: 'Currency code (e.g. USD, EUR)',
+  }),
   currency: Type.String({
     minLength: 1,
     description: 'Currency code (e.g. USD, EUR)',
   }),
-  liveExchangeRate: Type.Number({
+  exchangeRate: Type.Number({
     description: 'Snapshot of the exchange rate at the exact moment of sale',
   }),
   date: Type.Optional(Type.String({ format: 'date-time' })),

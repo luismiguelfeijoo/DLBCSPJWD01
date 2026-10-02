@@ -7,29 +7,35 @@ const transactionSchema = new Schema(
       type: Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true // Indexed for fast Dashboard lookups per user
+      index: true, // Indexed for fast Dashboard lookups per user
     },
     type: {
       type: String,
       enum: ['sale', 'adjustment'],
       required: true,
-      default: 'sale'
+      default: 'sale',
     },
     amount: {
       type: Number,
       required: true,
-      min: [0, 'Amount cannot be negative']
+      min: [0, 'Amount cannot be negative'],
     },
     currency: {
       type: String,
       required: true,
       uppercase: true,
-      trim: true
+      trim: true,
     },
-    liveExchangeRate: {
+    baseCurrency: {
+      type: String,
+      required: true,
+      uppercase: true,
+      trim: true,
+    },
+    exchangeRate: {
       type: Number,
       required: true,
-      comment: 'Snapshot of the rate at the exact moment of the sale'
+      comment: 'Snapshot of the rate at the exact moment of the sale',
     },
     date: {
       type: Date,
@@ -38,8 +44,8 @@ const transactionSchema = new Schema(
     },
     description: {
       type: String,
-      trim: true
-    }
+      trim: true,
+    },
   },
   {
     timestamps: true,
@@ -48,16 +54,16 @@ const transactionSchema = new Schema(
       transform: (doc, ret) => {
         const { _id, __v, ...rest } = ret;
         return rest;
-      }
+      },
     },
     toObject: {
       virtuals: true,
       transform: (doc, ret) => {
         const { _id, __v, ...rest } = ret;
         return rest;
-      }
+      },
     },
-  }
+  },
 );
 
 // 2. Create a Model.
