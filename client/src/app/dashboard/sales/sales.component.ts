@@ -1,4 +1,4 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, Injector } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -11,14 +11,7 @@ import { TransactionService } from '../../core/service/transaction.service';
 
 @Component({
   selector: 'app-sales',
-  imports: [
-    CurrencyPipe,
-    DatePipe,
-    MatIconModule,
-    MatButtonModule,
-    MatTableModule,
-    MatDialogModule,
-  ],
+  imports: [DatePipe, MatIconModule, MatButtonModule, MatTableModule, MatDialogModule],
   providers: [TransactionService, TransactionStore],
   templateUrl: './sales.component.html',
 })

@@ -11,7 +11,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs';
+import { filter, map } from 'rxjs';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { CurrencyService } from '../core/service/currency.service';
 import { TransactionService } from '../core/service/transaction.service';
 import { TransactionStore } from '../core/store/transaction.store';
@@ -35,7 +36,6 @@ import { UserStore } from '../core/store/user.store';
     ReactiveFormsModule,
   ],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss',
   providers: [CurrencyService, TransactionService, TransactionStore],
 })
 export class DashboardComponent {
@@ -49,13 +49,20 @@ export class DashboardComponent {
   userBaseCurrency = computed(() => this.selectedUser()?.baseCurrency);
   currencyControl = new FormControl<string | null>(null);
 
+  private breakpointObserver = inject(BreakpointObserver);
+
+  // Tailwind 'sm' breakpoint is 640px (< 640px is small screen / mobile)
+  readonly isSmallScreen = toSignal(
+    this.breakpointObserver.observe('(max-width: 639px)').pipe(map((res) => res.matches)),
+    { initialValue: window?.innerWidth < 640 },
+  );
+
   // Signals for local UI state
-  readonly isSidenavOpen = signal<boolean>(true);
-  readonly unreadNotifications = signal<number>(3);
+  readonly isDrawerOpen = signal<boolean>(!this.isSmallScreen());
 
   // Navigation Items Config
   readonly navItems = [
-    { path: '/dashboard/sales', label: 'Sales & POS', icon: 'point_of_sale' },
+    { path: '/dashboard/sales', label: 'Sales', icon: 'point_of_sale' },
     { path: '/dashboard/exchange', label: 'Currency Exchange', icon: 'currency_exchange' },
     { path: '/dashboard/history', label: 'Analytics & History', icon: 'bar_chart' },
   ];
@@ -79,13 +86,28 @@ export class DashboardComponent {
     this.currencyControl.setValue(this.userBaseCurrency() || null, { emitEvent: false });
   });
 
+  private _responsiveDrawerWatcher = effect(() => {
+    const isSmall = this.isSmallScreen();
+    this.isDrawerOpen.set(!isSmall);
+  });
+
   onCurrencyChange(currency: string): void {
     this.userStore.setBaseCurrency(currency);
   }
 
   // Action Methods using Signals
+  toggleDrawer(): void {
+    this.isDrawerOpen.update((state) => !state);
+  }
+
   toggleSidenav(): void {
-    this.isSidenavOpen.update((state) => !state);
+    this.toggleDrawer();
+  }
+
+  onNavItemClick(): void {
+    if (this.isSmallScreen()) {
+      this.isDrawerOpen.set(false);
+    }
   }
 
   logout(): void {

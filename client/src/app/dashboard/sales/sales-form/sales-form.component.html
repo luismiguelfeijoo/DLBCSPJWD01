@@ -12,7 +12,7 @@
         formControlName="description"
         placeholder="e.g., POS Purchase, Adjustment..."
       />
-      <mat-icon matSuffix class="!text-slate-400">description</mat-icon>
+      <mat-icon matSuffix>description</mat-icon>
       @if (form.controls.description.hasError('maxlength')) {
         <mat-error>Description cannot exceed 100 characters</mat-error>
       }
@@ -136,12 +136,12 @@
     </div>
 
     <div class="flex justify-end gap-3 mt-4">
-      <button type="button" mat-button class="!text-slate-600" (click)="resetForm()">Reset</button>
+      <button type="button" mat-button (click)="resetForm()">Reset</button>
       <button
         type="submit"
         mat-flat-button
+        color="primary"
         [disabled]="form.invalid"
-        class="!bg-indigo-600 !text-white hover:!bg-indigo-700 disabled:!bg-slate-300"
       >
         <mat-icon class="mr-1">add</mat-icon>
         Save Transaction
