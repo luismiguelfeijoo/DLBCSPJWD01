@@ -17,6 +17,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./dashboard/sales/sales.component').then((m) => m.SalesComponent),
       },
+      {
+        path: 'history',
+        loadComponent: () =>
+          import('./dashboard/graphs/graph-container.component').then(
+            (m) => m.GraphContainerComponent,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: 'dashboard', pathMatch: 'full' },

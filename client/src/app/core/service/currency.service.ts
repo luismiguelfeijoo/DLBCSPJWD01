@@ -17,6 +17,10 @@ export class CurrencyService {
       .pipe(map((dtos) => dtos.map(this.mapCurrencyDTO)));
   }
 
+  getCurrencyCodesByUser(userId: string): Observable<string[]> {
+    return this.httpClient.get<string[]>(`${this.baseUrl}/users/${userId}/currencies`);
+  }
+
   getExchangeRates(
     baseCurrency: string,
     inputParams?: { targetCurrency?: string; date?: string; from?: string; to?: string },

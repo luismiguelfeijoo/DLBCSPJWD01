@@ -17,26 +17,32 @@ import { Transaction } from '../model/transaction.model';
 import { CurrencyService } from '../service/currency.service';
 import { TransactionService } from '../service/transaction.service';
 import { UserStore } from './user.store';
+import { Balance } from '../model/balance.model';
+import { CurrencyStore } from './currency.store';
 
 type TransactionsState = {
-  _transactions: Transaction[];
+  sales: Transaction[];
+  adjustments: Transaction[];
   targetCurrency: Currency | null;
-  currencies: Currency[];
   rates: Rate[];
-  isLoadingCurrencies: boolean;
+  balances: Balance[];
+  isLoadingBalances: boolean;
   isLoadingRates: boolean;
-  isLoading: boolean;
+  isLoadingSales: boolean;
+  isLoadingAdjustments: boolean;
   isSaving: boolean;
 };
 
 const initialState: TransactionsState = {
-  _transactions: [],
+  sales: [],
+  adjustments: [],
   targetCurrency: null,
-  currencies: [],
   rates: [],
-  isLoadingCurrencies: false,
+  balances: [],
+  isLoadingBalances: false,
   isLoadingRates: false,
-  isLoading: false,
+  isLoadingSales: false,
+  isLoadingAdjustments: false,
   isSaving: false,
 };
 
@@ -47,65 +53,87 @@ export const TransactionStore = signalStore(
       _,
       _transactionService = inject(TransactionService),
       _currencyService = inject(CurrencyService),
+
+      _currencyStore = inject(CurrencyStore),
       _userStore = inject(UserStore),
-    ) => ({ _transactionService, _currencyService, _userStore }),
+    ) => ({ _transactionService, _currencyService, _currencyStore, _userStore }),
   ),
-  withComputed(({ _transactions, _userStore, currencies }) => ({
-    sales: computed(() => _transactions().filter((transaction) => transaction.type === 'sale')),
-    adjustments: computed(() =>
-      _transactions().filter((transaction) => transaction.type === 'adjustment'),
-    ),
+  withComputed(({ _userStore, _currencyStore }) => ({
     baseCurrency: computed(() =>
-      currencies()?.find(
-        (currency) => currency.isoCode === _userStore.selectedUser()?.baseCurrency,
-      ),
+      _currencyStore
+        .currencies()
+        ?.find((currency) => currency.isoCode === _userStore.selectedUser()?.baseCurrency),
     ),
   })),
   withMethods((store) => ({
     setTargetCurrency: (targetCurrencyCode: string) => {
       patchState(store, {
         targetCurrency:
-          store.currencies()?.find((currency) => currency.isoCode === targetCurrencyCode) || null,
+          store._currencyStore
+            .currencies()
+            ?.find((currency) => currency.isoCode === targetCurrencyCode) || null,
       });
     },
-    _loadTransactions: rxMethod<string>(
+    loadSales: rxMethod<string>(
       pipe(
         tap(() => {
-          patchState(store, { isLoading: true });
+          patchState(store, { isLoadingSales: true });
         }),
         switchMap((userId) =>
-          store._transactionService.getUserTransactions(userId).pipe(
+          store._transactionService.getUserSales(userId).pipe(
             tapResponse({
               next: (transactions) => {
                 patchState(store, {
-                  isLoading: false,
-                  _transactions: transactions,
+                  isLoadingSales: false,
+                  sales: transactions,
                 });
               },
               error: (error) => {
-                patchState(store, { isLoading: false });
+                patchState(store, { isLoadingSales: false });
               },
             }),
           ),
         ),
       ),
     ),
-    loadCurrencies: rxMethod<void>(
+    loadAdjustments: rxMethod<string>(
       pipe(
         tap(() => {
-          patchState(store, { isLoadingCurrencies: true });
+          patchState(store, { isLoadingSales: true });
         }),
-        switchMap(() =>
-          store._currencyService.getCurrencies().pipe(
+        switchMap((userId) =>
+          store._transactionService.getUserAdjustments(userId).pipe(
             tapResponse({
-              next: (currencies) => {
+              next: (transactions) => {
                 patchState(store, {
-                  isLoadingCurrencies: false,
-                  currencies,
+                  isLoadingSales: false,
+                  adjustments: transactions,
                 });
               },
               error: (error) => {
-                patchState(store, { isLoadingCurrencies: false });
+                patchState(store, { isLoadingSales: false });
+              },
+            }),
+          ),
+        ),
+      ),
+    ),
+    _loadBalances: rxMethod<string>(
+      pipe(
+        tap(() => {
+          patchState(store, { isLoadingBalances: true });
+        }),
+        switchMap((userId) =>
+          store._transactionService.getUserBalances(userId).pipe(
+            tapResponse({
+              next: (balances) => {
+                patchState(store, {
+                  isLoadingBalances: false,
+                  balances,
+                });
+              },
+              error: (error) => {
+                patchState(store, { isLoadingBalances: false });
               },
             }),
           ),
@@ -145,6 +173,8 @@ export const TransactionStore = signalStore(
         }),
       ),
     ),
+  })),
+  withMethods((store) => ({
     registerSale: rxMethod<{
       description: string;
       date: string;
@@ -159,14 +189,13 @@ export const TransactionStore = signalStore(
         }),
         switchMap(({ description, date, currency, amount, exchangeRate, baseCurrency }) =>
           store._transactionService
-            .createTransaction({
+            .createSale({
               description,
               date,
               baseCurrency,
               currency,
               amount,
               userId: store._userStore.selectedUser()?.id!,
-              type: 'sale',
               exchangeRate,
             })
             .pipe(
@@ -174,8 +203,49 @@ export const TransactionStore = signalStore(
                 next: (newTransaction) => {
                   patchState(store, (state) => ({
                     isSaving: false,
-                    _transactions: [...state._transactions, newTransaction],
+                    sales: [...state.sales, newTransaction],
                   }));
+                  store._loadBalances(store._userStore.selectedUser()?.id!);
+                },
+                error: (error) => {
+                  patchState(store, { isSaving: false });
+                },
+              }),
+            ),
+        ),
+      ),
+    ),
+    registerAdjustment: rxMethod<{
+      description: string;
+      date: string;
+      baseCurrency: string;
+      currency: string;
+      amount: number;
+      exchangeRate: number;
+    }>(
+      pipe(
+        tap(() => {
+          patchState(store, { isSaving: true });
+        }),
+        switchMap(({ description, date, currency, amount, exchangeRate, baseCurrency }) =>
+          store._transactionService
+            .createAdjustment({
+              description,
+              date,
+              baseCurrency,
+              currency,
+              amount,
+              userId: store._userStore.selectedUser()?.id!,
+              exchangeRate,
+            })
+            .pipe(
+              tapResponse({
+                next: (newTransaction) => {
+                  patchState(store, (state) => ({
+                    isSaving: false,
+                    adjustments: [...state.adjustments, newTransaction],
+                  }));
+                  store._loadBalances(store._userStore.selectedUser()?.id!);
                 },
                 error: (error) => {
                   patchState(store, { isSaving: false });
@@ -190,8 +260,9 @@ export const TransactionStore = signalStore(
     onInit: (store) => {
       const selectedUser = store._userStore.selectedUser();
       if (selectedUser?.id) {
-        store._loadTransactions(selectedUser.id);
-        store.loadCurrencies();
+        store.loadSales(selectedUser.id);
+        store.loadAdjustments(selectedUser.id);
+        store._loadBalances(selectedUser.id);
       }
 
       effect(() => {

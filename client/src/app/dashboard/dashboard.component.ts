@@ -17,6 +17,7 @@ import { CurrencyService } from '../core/service/currency.service';
 import { TransactionService } from '../core/service/transaction.service';
 import { TransactionStore } from '../core/store/transaction.store';
 import { UserStore } from '../core/store/user.store';
+import { CurrencyStore } from '../core/store/currency.store';
 
 @Component({
   selector: 'app-dashboard',
@@ -36,16 +37,18 @@ import { UserStore } from '../core/store/user.store';
     ReactiveFormsModule,
   ],
   templateUrl: './dashboard.component.html',
-  providers: [CurrencyService, TransactionService, TransactionStore],
+  providers: [CurrencyService, TransactionService, CurrencyStore, TransactionStore],
 })
 export class DashboardComponent {
   private userStore = inject(UserStore);
   private transactionStore = inject(TransactionStore);
+  private currencyStore = inject(CurrencyStore);
+
   private router = inject(Router);
   protected readonly title = signal('client');
 
   selectedUser = this.userStore.selectedUser;
-  currencies = this.transactionStore.currencies;
+  currencies = this.currencyStore.currencies;
   userBaseCurrency = computed(() => this.selectedUser()?.baseCurrency);
   currencyControl = new FormControl<string | null>(null);
 

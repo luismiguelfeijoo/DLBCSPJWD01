@@ -39,5 +39,31 @@ export const GetTransactionsQuerySchema = Type.Object({
     maxLength: 24,
     description: 'MongoDB ObjectId hex string of the user',
   }),
+  type: TransactionTypeSchema,
 });
 export type GetTransactionsQuery = Type.Static<typeof GetTransactionsQuerySchema>;
+
+// Query string schema for GET /transactions/balances
+export const GetUserBalancesQuerySchema = Type.Object({
+  userId: Type.String({
+    minLength: 24,
+    maxLength: 24,
+    description: 'MongoDB ObjectId hex string of the user',
+  }),
+});
+export type GetUserBalancesQuery = Type.Static<typeof GetUserBalancesQuerySchema>;
+
+// Response schema for GET /transactions/balances
+const BalanceSummarySchema = Type.Object({
+  userId: Type.String({ description: 'MongoDB ObjectId string' }),
+  currency: Type.String({ minLength: 3, maxLength: 3 }), // ISO 4217 code
+  totalSales: Type.Number(),
+  totalAdjustments: Type.Number(),
+  salesCount: Type.Integer({ minimum: 0 }),
+  adjustmentsCount: Type.Integer({ minimum: 0 }),
+  netSales: Type.Number(),
+});
+
+export const BalanceSummaryListSchema = Type.Array(BalanceSummarySchema);
+
+export type BalanceSummaryResponse = Type.Static<typeof BalanceSummaryListSchema>;

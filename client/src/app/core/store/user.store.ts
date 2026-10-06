@@ -1,3 +1,5 @@
+import { inject } from '@angular/core';
+import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
   signalStore,
@@ -7,11 +9,9 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { EMPTY, pipe, switchMap, tap } from 'rxjs';
 import { User } from '../model/user.model';
 import { UserService } from '../service/user.service';
-import { inject } from '@angular/core';
-import { EMPTY, filter, pipe, switchMap, tap, withLatestFrom } from 'rxjs';
-import { tapResponse } from '@ngrx/operators';
 
 type UserState = {
   users: User[];

@@ -8,6 +8,7 @@ import { TransactionStore } from '../../core/store/transaction.store';
 import { UserStore } from '../../core/store/user.store';
 import { SalesFormComponent } from './sales-form/sales-form.component';
 import { TransactionService } from '../../core/service/transaction.service';
+import { CurrencyStore } from '../../core/store/currency.store';
 
 @Component({
   selector: 'app-sales',
@@ -17,16 +18,17 @@ import { TransactionService } from '../../core/service/transaction.service';
 })
 export class SalesComponent {
   private transactionStore = inject(TransactionStore);
+  private currencyStore = inject(CurrencyStore);
   private userStore = inject(UserStore);
   private dialog = inject(MatDialog);
   private injector = inject(Injector);
 
-  isLoading = this.transactionStore.isLoading;
+  isLoading = this.transactionStore.isLoadingSales;
 
   sales = computed(() =>
     this.transactionStore.sales().map((sale) => {
-      const currency = this.transactionStore.currencies().find((c) => c.isoCode === sale.currency);
-      const baseCurrency = this.transactionStore
+      const currency = this.currencyStore.currencies().find((c) => c.isoCode === sale.currency);
+      const baseCurrency = this.currencyStore
         .currencies()
         .find((c) => c.isoCode === sale.baseCurrency);
 

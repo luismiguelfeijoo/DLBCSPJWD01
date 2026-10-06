@@ -22,6 +22,7 @@
     "@angular/router": "^22.0.0",
     "@ngrx/operators": "^21.1.1",
     "@ngrx/signals": "^21.1.1",
+    "@swimlane/ngx-charts": "^25.0.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

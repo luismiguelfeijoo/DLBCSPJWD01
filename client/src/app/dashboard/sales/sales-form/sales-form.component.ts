@@ -15,6 +15,7 @@ import { Currency } from '../../../core/model/currency.model';
 import { Rate } from '../../../core/model/rate.model';
 import { Subject, takeUntil, tap } from 'rxjs';
 import { formatDate } from '@angular/common';
+import { CurrencyStore } from '../../../core/store/currency.store';
 
 const CUSTOM_RATE = {
   date: '',
@@ -41,6 +42,8 @@ const CUSTOM_RATE = {
 })
 export class SalesFormComponent implements OnInit, OnDestroy {
   private transactionStore = inject(TransactionStore);
+  private currencyStore = inject(CurrencyStore);
+
   private fb = inject(FormBuilder);
   private locale = inject(LOCALE_ID); // 2. Inject it (e.g. 'en-US', 'es', etc.)
 
@@ -50,7 +53,7 @@ export class SalesFormComponent implements OnInit, OnDestroy {
   });
   private destroy$ = new Subject<void>();
 
-  currencies = this.transactionStore.currencies;
+  currencies = this.currencyStore.currencies;
   rates = computed<Array<{ label: string } & Rate>>(() => [
     CUSTOM_RATE,
     ...this.transactionStore.rates().map((rate) => {
