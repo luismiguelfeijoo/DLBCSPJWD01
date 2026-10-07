@@ -68,7 +68,8 @@ const transactionRoutes = (fastify: FastifyInstance) => {
       }
 
       const userObjectId = new Types.ObjectId(userId);
-      const result = await Transaction.aggregate([
+
+      const sales = await Transaction.aggregate([
         {
           $match: {
             userId: userObjectId,
@@ -82,14 +83,7 @@ const transactionRoutes = (fastify: FastifyInstance) => {
               currency: '$currency',
             },
             totalSales: {
-              $sum: {
-                $cond: [{ $eq: ['$type', 'sale'] }, '$amount', 0],
-              },
-            },
-            totalAdjustments: {
-              $sum: {
-                $cond: [{ $eq: ['$type', 'adjustment'] }, '$amount', 0],
-              },
+              $sum: '$amount',
             },
           },
         },
@@ -99,15 +93,55 @@ const transactionRoutes = (fastify: FastifyInstance) => {
             userId: '$_id.userId',
             currency: '$_id.currency',
             totalSales: 1,
-            totalAdjustments: 1,
-            // totalSales - totalAdjustments
-            netSales: { $subtract: ['$totalSales', '$totalAdjustments'] },
           },
         },
         {
-          $sort: { netSales: -1 }, // Highest revenue currency first
+          $sort: { currency: -1 },
         },
       ]);
+      const adjustments = await Transaction.aggregate([
+        {
+          $match: {
+            userId: userObjectId,
+            type: 'adjustment',
+          },
+        },
+        {
+          // Group primarily by currency
+          $group: {
+            _id: {
+              userId: '$userId',
+              currency: '$baseCurrency',
+            },
+            totalAdjustments: {
+              $sum: '$baseAmount',
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            userId: '$_id.userId',
+            currency: '$_id.currency',
+            totalAdjustments: 1,
+          },
+        },
+        {
+          $sort: { currency: -1 },
+        },
+      ]);
+
+      const result = sales.map((sale) => {
+        const adjustmentAmount = adjustments.reduce(
+          (acc, adjustment) =>
+            acc + (adjustment.currency === sale.currency ? adjustment.totalAdjustments : 0),
+          0,
+        );
+        return {
+          currency: sale.currency,
+          total: sale.totalSales - adjustmentAmount,
+        };
+      });
 
       return reply.code(200).send(result);
     },

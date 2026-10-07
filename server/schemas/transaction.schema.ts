@@ -16,6 +16,10 @@ export const CreateTransactionSchema = Type.Object({
     minimum: 0,
     description: 'Amount cannot be negative',
   }),
+  baseAmount: Type.Number({
+    minimum: 0,
+    description: 'Base amount cannot be negative',
+  }),
   baseCurrency: Type.String({
     minLength: 1,
     description: 'Currency code (e.g. USD, EUR)',

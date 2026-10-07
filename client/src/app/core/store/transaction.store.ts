@@ -140,20 +140,16 @@ export const TransactionStore = signalStore(
         ),
       ),
     ),
-    _loadRates: rxMethod<string>(
+    loadRates: rxMethod<{ targetCurrencyCode: string; baseCurrencyCode: string }>(
       pipe(
         tap(() => {
           patchState(store, { isLoadingRates: true });
         }),
-        switchMap((targetCurrencyCode) => {
-          const baseCurrency = store.baseCurrency();
-          if (!baseCurrency) {
-            return EMPTY;
-          }
+        switchMap(({ targetCurrencyCode, baseCurrencyCode }) => {
           const fromDate = new Date();
           fromDate.setDate(fromDate.getDate() - 7);
           return store._currencyService
-            .getExchangeRates(baseCurrency.isoCode, {
+            .getExchangeRates(baseCurrencyCode, {
               targetCurrency: targetCurrencyCode,
               from: fromDate.toISOString().split('T')[0],
             })
@@ -182,36 +178,39 @@ export const TransactionStore = signalStore(
       currency: string;
       amount: number;
       exchangeRate: number;
+      baseAmount: number;
     }>(
       pipe(
         tap(() => {
           patchState(store, { isSaving: true });
         }),
-        switchMap(({ description, date, currency, amount, exchangeRate, baseCurrency }) =>
-          store._transactionService
-            .createSale({
-              description,
-              date,
-              baseCurrency,
-              currency,
-              amount,
-              userId: store._userStore.selectedUser()?.id!,
-              exchangeRate,
-            })
-            .pipe(
-              tapResponse({
-                next: (newTransaction) => {
-                  patchState(store, (state) => ({
-                    isSaving: false,
-                    sales: [...state.sales, newTransaction],
-                  }));
-                  store._loadBalances(store._userStore.selectedUser()?.id!);
-                },
-                error: (error) => {
-                  patchState(store, { isSaving: false });
-                },
-              }),
-            ),
+        switchMap(
+          ({ description, date, currency, amount, exchangeRate, baseCurrency, baseAmount }) =>
+            store._transactionService
+              .createSale({
+                description,
+                date,
+                baseCurrency,
+                currency,
+                amount,
+                userId: store._userStore.selectedUser()?.id!,
+                exchangeRate,
+                baseAmount,
+              })
+              .pipe(
+                tapResponse({
+                  next: (newTransaction) => {
+                    patchState(store, (state) => ({
+                      isSaving: false,
+                      sales: [...state.sales, newTransaction],
+                    }));
+                    store._loadBalances(store._userStore.selectedUser()?.id!);
+                  },
+                  error: (error) => {
+                    patchState(store, { isSaving: false });
+                  },
+                }),
+              ),
         ),
       ),
     ),
@@ -222,36 +221,39 @@ export const TransactionStore = signalStore(
       currency: string;
       amount: number;
       exchangeRate: number;
+      baseAmount: number;
     }>(
       pipe(
         tap(() => {
           patchState(store, { isSaving: true });
         }),
-        switchMap(({ description, date, currency, amount, exchangeRate, baseCurrency }) =>
-          store._transactionService
-            .createAdjustment({
-              description,
-              date,
-              baseCurrency,
-              currency,
-              amount,
-              userId: store._userStore.selectedUser()?.id!,
-              exchangeRate,
-            })
-            .pipe(
-              tapResponse({
-                next: (newTransaction) => {
-                  patchState(store, (state) => ({
-                    isSaving: false,
-                    adjustments: [...state.adjustments, newTransaction],
-                  }));
-                  store._loadBalances(store._userStore.selectedUser()?.id!);
-                },
-                error: (error) => {
-                  patchState(store, { isSaving: false });
-                },
-              }),
-            ),
+        switchMap(
+          ({ description, date, currency, amount, exchangeRate, baseCurrency, baseAmount }) =>
+            store._transactionService
+              .createAdjustment({
+                description,
+                date,
+                baseCurrency,
+                currency,
+                amount,
+                userId: store._userStore.selectedUser()?.id!,
+                exchangeRate,
+                baseAmount,
+              })
+              .pipe(
+                tapResponse({
+                  next: (newTransaction) => {
+                    patchState(store, (state) => ({
+                      isSaving: false,
+                      adjustments: [...state.adjustments, newTransaction],
+                    }));
+                    store._loadBalances(store._userStore.selectedUser()?.id!);
+                  },
+                  error: (error) => {
+                    patchState(store, { isSaving: false });
+                  },
+                }),
+              ),
         ),
       ),
     ),
@@ -264,15 +266,6 @@ export const TransactionStore = signalStore(
         store.loadAdjustments(selectedUser.id);
         store._loadBalances(selectedUser.id);
       }
-
-      effect(() => {
-        const targetCurrency = store.targetCurrency();
-        if (targetCurrency?.isoCode) {
-          store._loadRates(targetCurrency.isoCode);
-        } else {
-          patchState(store, { rates: [] });
-        }
-      });
     },
   }),
 );

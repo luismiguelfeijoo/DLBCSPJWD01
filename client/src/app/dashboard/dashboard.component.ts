@@ -66,8 +66,7 @@ export class DashboardComponent {
   // Navigation Items Config
   readonly navItems = [
     { path: '/dashboard/sales', label: 'Sales', icon: 'point_of_sale' },
-    { path: '/dashboard/exchange', label: 'Currency Exchange', icon: 'currency_exchange' },
-    { path: '/dashboard/history', label: 'Analytics & History', icon: 'bar_chart' },
+    { path: '/dashboard/analytics', label: 'Analytics & History', icon: 'bar_chart' },
   ];
 
   // Convert Router events into an Angular Signal using `toSignal`

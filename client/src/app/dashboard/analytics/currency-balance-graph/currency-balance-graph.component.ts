@@ -9,9 +9,7 @@ import { CurrencyStore } from '../../../core/store/currency.store';
 @Component({
   selector: 'app-currency-balance-graph',
   imports: [NgxChartsModule],
-  template: `
-    <ngx-charts-pie-grid [results]="data()" (select)="onSelect($event)"> </ngx-charts-pie-grid>
-  `,
+  template: ` <ngx-charts-pie-grid [results]="data()"> </ngx-charts-pie-grid> `,
 })
 export class CurrencyBalanceGraphComponent {
   private transactionStore = inject(TransactionStore);
@@ -27,15 +25,14 @@ export class CurrencyBalanceGraphComponent {
 
   view = [];
   data = computed(() =>
-    this.transactionStore.balances()?.map((balance) => {
-      const currency = this.currencyStore
-        .currencies()
-        ?.find((currency) => currency.isoCode === balance.currency);
-      return { name: `${balance.currency} (${currency?.symbol})`, value: balance.netSales };
-    }),
+    this.transactionStore
+      .balances()
+      ?.filter((balance) => balance.total)
+      .map((balance) => {
+        const currency = this.currencyStore
+          .currencies()
+          ?.find((currency) => currency.isoCode === balance.currency);
+        return { name: `${balance.currency} (${currency?.symbol})`, value: balance.total };
+      }),
   );
-
-  onSelect(event: any) {
-    console.log('event', event);
-  }
 }

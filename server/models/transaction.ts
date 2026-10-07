@@ -26,6 +26,11 @@ const transactionSchema = new Schema(
       uppercase: true,
       trim: true,
     },
+    baseAmount: {
+      type: Number,
+      required: true,
+      min: [0, 'Base amount cannot be negative'],
+    },
     baseCurrency: {
       type: String,
       required: true,

@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { TransactionStore } from '../../core/store/transaction.store';
 import { UserStore } from '../../core/store/user.store';
-import { SalesFormComponent } from './sales-form/sales-form.component';
+import { TransactionFormComponent } from '../transaction-form/transaction-form.component';
 import { TransactionService } from '../../core/service/transaction.service';
 import { CurrencyStore } from '../../core/store/currency.store';
 
@@ -43,12 +43,21 @@ export class SalesComponent {
   displayedColumns = ['date', 'description', 'amount', 'currency', 'exchangeRate'];
 
   openNewSale() {
-    let dialogRef = this.dialog.open(SalesFormComponent, {
+    const dialogRef = this.dialog.open(TransactionFormComponent, {
       height: '80vh',
       width: '80vw',
       // maxWidth: '80vw',
       injector: this.injector,
     });
+
+    dialogRef.componentRef?.setInput('mode', 'sale');
+    dialogRef.componentRef?.setInput('currencies', this.currencyStore.currencies());
+    dialogRef.componentRef?.setInput(
+      'baseCurrencies',
+      this.currencyStore
+        .currencies()
+        .filter((currency) => this.userStore.selectedUser()?.baseCurrency === currency.isoCode),
+    );
 
     let saveStarted = false;
     const saveEffect = effect(

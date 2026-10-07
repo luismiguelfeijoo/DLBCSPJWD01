@@ -18,11 +18,9 @@ export const routes: Routes = [
           import('./dashboard/sales/sales.component').then((m) => m.SalesComponent),
       },
       {
-        path: 'history',
+        path: 'analytics',
         loadComponent: () =>
-          import('./dashboard/graphs/graph-container.component').then(
-            (m) => m.GraphContainerComponent,
-          ),
+          import('./dashboard/analytics/analytics.component').then((m) => m.AnalyticsComponent),
       },
     ],
   },
