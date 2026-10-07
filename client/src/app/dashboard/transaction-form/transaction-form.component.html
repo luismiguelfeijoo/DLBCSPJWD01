@@ -1,0 +1,146 @@
+<div class="w-full mx-auto p-6">
+  <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+    <mat-icon class="text-slate-600">receipt_long</mat-icon>
+    New Transaction
+  </h2>
+
+  <form [formGroup]="form" (ngSubmit)="onSave()" class="flex flex-col gap-4">
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Description</mat-label>
+      <input
+        matInput
+        formControlName="description"
+        placeholder="e.g., POS Purchase, Adjustment..."
+      />
+      <mat-icon matSuffix>description</mat-icon>
+      @if (form.controls.description.hasError('maxlength')) {
+        <mat-error>Description cannot exceed 100 characters</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 sm:gap-4">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Date</mat-label>
+        <input
+          matInput
+          [matDatepicker]="datepicker"
+          formControlName="date"
+          placeholder="Choose a date"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="datepicker"></mat-datepicker-toggle>
+        <mat-datepicker #datepicker></mat-datepicker>
+        @if (form.controls.date.hasError('required')) {
+          <mat-error>Date is required</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Time</mat-label>
+        <input
+          matInput
+          [matTimepicker]="timepicker"
+          formControlName="time"
+          placeholder="Select time"
+        />
+        <mat-timepicker-toggle matIconSuffix [for]="timepicker"></mat-timepicker-toggle>
+        <mat-timepicker #timepicker interval="30m"></mat-timepicker>
+        @if (form.controls.time.hasError('required')) {
+          <mat-error>Time is required</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-3 gap-1 sm:grid-cols-4 sm:gap-4">
+      <mat-form-field appearance="outline" class="col-span-1 sm:col-span-1">
+        <mat-select formControlName="baseCurrency">
+          @for (currency of baseCurrencies(); track currency.isoCode) {
+            <mat-option [value]="currency">{{ currency.isoCode }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.currency.hasError('required')) {
+          <mat-error>Select currency</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="col-span-2 sm:col-span-3">
+        <mat-label>Price</mat-label>
+        <input
+          matInput
+          type="number"
+          step="0.01"
+          formControlName="baseAmount"
+          placeholder="0.00"
+          (blur)="formatDecimals('baseAmount', 2)"
+        />
+        <span matSuffix class="pl-2 pr-1 text-slate-500 font-medium">
+          {{ baseCurrencySymbol }}
+        </span>
+        @if (form.controls.baseAmount.hasError('required')) {
+          <mat-error>Amount is required</mat-error>
+        }
+        @if (form.controls.baseAmount.hasError('min')) {
+          <mat-error>Amount must be greater than 0</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-3 gap-1 sm:grid-cols-4 sm:gap-4">
+      <mat-form-field appearance="outline" class="col-span-1 sm:col-span-1">
+        <mat-select formControlName="currency" (selectionChange)="onCurrencyChange($event.value)">
+          @for (currency of currencies(); track currency.isoCode) {
+            <mat-option [value]="currency">{{ currency.isoCode }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.currency.hasError('required')) {
+          <mat-error>Select currency</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="col-span-2 sm:col-span-3">
+        <mat-label>Client pays</mat-label>
+        <input
+          matInput
+          type="number"
+          step="0.01"
+          formControlName="amount"
+          placeholder="0.00"
+          (blur)="formatDecimals('amount', 2)"
+        />
+        <span matSuffix class="pl-2 pr-1 text-slate-500 font-medium">
+          {{ currencySymbol }}
+        </span>
+        @if (form.controls.amount.hasError('required')) {
+          <mat-error>Amount is required</mat-error>
+        }
+        @if (form.controls.amount.hasError('min')) {
+          <mat-error>Amount must be greater than 0</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-8 gap-1 sm:grid-cols-5 sm:gap-4">
+      <mat-form-field appearance="outline" class="col-span-8 sm:col-start-2 sm:col-span-4">
+        <mat-label>Exchange rate</mat-label>
+        <mat-select
+          formControlName="exchangeRate"
+          (selectionChange)="onExchangeRateSelected($event.value)"
+        >
+          @for (rate of rates(); track rate.date) {
+            <mat-option [value]="rate">{{ rate.label }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.exchangeRate.hasError('required')) {
+          <mat-error>Select exchange rate</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="flex justify-end gap-3 mt-4">
+      <button type="button" mat-button (click)="resetForm()">Reset</button>
+      <button type="submit" mat-flat-button color="primary" [disabled]="form.invalid">
+        <mat-icon class="mr-1">add</mat-icon>
+        Save Transaction
+      </button>
+    </div>
+  </form>
+</div>
