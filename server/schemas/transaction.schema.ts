@@ -57,17 +57,42 @@ export const GetUserBalancesQuerySchema = Type.Object({
 });
 export type GetUserBalancesQuery = Type.Static<typeof GetUserBalancesQuerySchema>;
 
-// Response schema for GET /transactions/balances
-const BalanceSummarySchema = Type.Object({
-  userId: Type.String({ description: 'MongoDB ObjectId string' }),
-  currency: Type.String({ minLength: 3, maxLength: 3 }), // ISO 4217 code
-  totalSales: Type.Number(),
-  totalAdjustments: Type.Number(),
-  salesCount: Type.Integer({ minimum: 0 }),
-  adjustmentsCount: Type.Integer({ minimum: 0 }),
-  netSales: Type.Number(),
+// Response schema for single transaction
+export const TransactionResponseSchema = Type.Object({
+  id: Type.Optional(Type.String()),
+  type: TransactionTypeSchema,
+  amount: Type.Number(),
+  baseAmount: Type.Number(),
+  baseCurrency: Type.String(),
+  currency: Type.String(),
+  exchangeRate: Type.Number(),
+  date: Type.String(),
+  description: Type.String(),
+  createdAt: Type.Optional(Type.String()),
+  updatedAt: Type.Optional(Type.String()),
 });
+export type TransactionResponse = Type.Static<typeof TransactionResponseSchema>;
+
+export const TransactionsResponseSchema = Type.Array(TransactionResponseSchema);
+export type TransactionsResponse = Type.Static<typeof TransactionsResponseSchema>;
+
+// Response schema for GET /users/:id/balances
+export const BalanceSummarySchema = Type.Object({
+  currency: Type.String(),
+  total: Type.Number(),
+});
+export type BalanceSummary = Type.Static<typeof BalanceSummarySchema>;
 
 export const BalanceSummaryListSchema = Type.Array(BalanceSummarySchema);
-
 export type BalanceSummaryResponse = Type.Static<typeof BalanceSummaryListSchema>;
+
+// Response schema for GET /users/:id/exchange-disparity
+export const ExchangeDisparitySchema = Type.Object({
+  baseCurrency: Type.String(),
+  currency: Type.String(),
+  disparity: Type.Number(),
+});
+export type ExchangeDisparity = Type.Static<typeof ExchangeDisparitySchema>;
+
+export const ExchangeDisparityListSchema = Type.Array(ExchangeDisparitySchema);
+export type ExchangeDisparityResponse = Type.Static<typeof ExchangeDisparityListSchema>;

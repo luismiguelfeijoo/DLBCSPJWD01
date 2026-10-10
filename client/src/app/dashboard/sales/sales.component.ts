@@ -13,7 +13,6 @@ import { CurrencyStore } from '../../core/store/currency.store';
 @Component({
   selector: 'app-sales',
   imports: [DatePipe, MatIconModule, MatButtonModule, MatTableModule, MatDialogModule],
-  providers: [TransactionService, TransactionStore],
   templateUrl: './sales.component.html',
 })
 export class SalesComponent {

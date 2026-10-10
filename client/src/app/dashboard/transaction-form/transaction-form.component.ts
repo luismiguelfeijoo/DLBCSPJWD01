@@ -4,29 +4,26 @@ import {
   effect,
   inject,
   input,
-  Input,
   LOCALE_ID,
   OnDestroy,
   OnInit,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatTimepickerModule } from '@angular/material/timepicker';
-import { provideNativeDateAdapter } from '@angular/material/core';
-import { MatChipsModule } from '@angular/material/chips';
 
-import { TransactionStore } from '../../core/store/transaction.store';
+import { formatDate } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { Subject, takeUntil, tap } from 'rxjs';
 import { Currency } from '../../core/model/currency.model';
 import { Rate } from '../../core/model/rate.model';
-import { Subject, takeUntil, tap } from 'rxjs';
-import { formatDate } from '@angular/common';
-import { CurrencyStore } from '../../core/store/currency.store';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { TransactionStore } from '../../core/store/transaction.store';
 
 const CUSTOM_RATE = {
   date: '',
@@ -48,17 +45,24 @@ const CUSTOM_RATE = {
     MatIconModule,
     MatChipsModule,
   ],
-  providers: [provideNativeDateAdapter()],
   templateUrl: './transaction-form.component.html',
 })
-// TODO rename component and improve placeholders based on mode.
 export class TransactionFormComponent implements OnInit, OnDestroy {
   readonly mode = input.required<'sale' | 'adjustment'>();
   readonly defaultDescription = input<string>('');
   readonly currencies = input.required<Currency[]>();
   readonly baseCurrencies = input.required<Currency[]>();
 
+  readonly baseCurrencyLabel = computed(() => {
+    return this.mode() === 'sale' ? 'Price' : 'You exchange';
+  });
+
+  readonly currencyLabel = computed(() => {
+    return this.mode() === 'sale' ? 'Client pays' : 'You recieve';
+  });
+
   private readonly transactionStore = inject(TransactionStore);
+
   private readonly fb = inject(FormBuilder);
   private readonly locale = inject(LOCALE_ID);
 
@@ -75,10 +79,14 @@ export class TransactionFormComponent implements OnInit, OnDestroy {
 
   private _formInitializer = effect(() => {
     if (this.mode() === 'sale') {
+      // set the base currency to the user default currency
       const baseCurrency = this.transactionStore.baseCurrency();
       this.form.patchValue({ baseCurrency });
     } else {
       this.form.controls.baseCurrency.enable();
+      // set the target currency to user base currency
+      const baseCurrency = this.transactionStore.baseCurrency();
+      this.form.patchValue({ currency: baseCurrency });
     }
   });
 

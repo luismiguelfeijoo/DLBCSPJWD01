@@ -33,8 +33,12 @@ export class AnalyticsComponent {
   private currencies = computed(() =>
     this.currencyStore
       .currencies()
-      .filter((currency) =>
-        this.transactionStore.balances()?.some((balance) => balance.currency === currency.isoCode),
+      .filter(
+        (currency) =>
+          this.transactionStore.baseCurrency()?.isoCode !== currency.isoCode &&
+          this.transactionStore
+            .balances()
+            ?.some((balance) => balance.currency === currency.isoCode),
       ),
   );
 

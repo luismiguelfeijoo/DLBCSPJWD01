@@ -6,7 +6,7 @@ import {
   RatesResponseSchema,
 } from '../schemas/rate.schema.ts';
 import { CurrenciesResponseSchema } from '../schemas/currency.schema.ts';
-import { ErrorResponseSchema } from '../schemas/error.schema.ts';
+import { DEFAULT_ERROR_RESPONSE, ErrorResponseSchema } from '../schemas/error.schema.ts';
 
 const currencyRoutes = (fastify: FastifyInstance) => {
   const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -27,10 +27,7 @@ const currencyRoutes = (fastify: FastifyInstance) => {
         return reply.code(200).send(currencies);
       } catch (err: any) {
         fastify.log.error(err, 'Failed to fetch currency rates');
-        return reply.send(err?.statusCode || 500).send({
-          error: err.name,
-          message: err.message || 'Error fetching currency rates from external provider',
-        });
+        return reply.code(500).send(DEFAULT_ERROR_RESPONSE);
       }
     },
   );
@@ -43,6 +40,7 @@ const currencyRoutes = (fastify: FastifyInstance) => {
         querystring: GetRatesQuerySchema,
         response: {
           200: RatesResponseSchema,
+          400: ErrorResponseSchema,
           500: ErrorResponseSchema,
         },
       },
@@ -62,10 +60,7 @@ const currencyRoutes = (fastify: FastifyInstance) => {
         return reply.code(200).send(rates);
       } catch (err: any) {
         fastify.log.error(err, 'Failed to fetch currency rates');
-        return reply.send(err?.statusCode || 500).send({
-          error: err.name,
-          message: err.message || 'Error fetching currency rates from external provider',
-        });
+        return reply.code(500).send(DEFAULT_ERROR_RESPONSE);
       }
     },
   );

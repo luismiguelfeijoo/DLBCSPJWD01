@@ -1,62 +1,360 @@
+import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import type { FastifyPluginCallback } from 'fastify';
 import { isObjectIdOrHexString } from 'mongoose';
-import { Transaction } from '../models/transaction.ts';
-import { User } from '../models/user.ts';
+import {
+  getAdjustmentsByUserIdGroupedByCurrencyByDate,
+  getDistinctCurrenciesByUserId,
+  getUserBalances,
+} from '../models/transaction.ts';
+import { getAllUsers, getUserById, updateUserBaseCurrency } from '../models/user.ts';
+import { DEFAULT_ERROR_RESPONSE, ErrorResponseSchema } from '../schemas/error.schema.ts';
+import type { RateResponse } from '../schemas/rate.schema.ts';
+import {
+  BalanceSummaryListSchema,
+  ExchangeDisparityListSchema,
+} from '../schemas/transaction.schema.ts';
+import {
+  UpdateUserBaseCurrencySchema,
+  UserCurrenciesResponseSchema,
+  UserIdParamsSchema,
+  UserResponseSchema,
+  UsersResponseSchema,
+} from '../schemas/user.schema.ts';
 
 const userRoutes: FastifyPluginCallback = (fastify, _) => {
-  fastify.get('/', async (request, reply) => {
-    const users = await User.find();
-    reply.code(200).send(users);
-  });
+  const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
-  // This route is using the typing on the function definition
-  fastify.get<{ Params: { id: string } }>('/:id', async (request, reply) => {
-    const { id } = request.params;
-    if (!isObjectIdOrHexString(id)) {
-      fastify.log.warn('Provided id is not valid');
-      return reply.code(400).send();
-    }
-    const user = await User.findById(id);
-    if (!user) {
-      return reply.code(404).send();
-    }
-    return reply.code(200).send(user);
-  });
+  // GET /users - list all users
+  server.get(
+    '/',
+    {
+      schema: {
+        response: {
+          200: UsersResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const users = await getAllUsers();
+        return reply.code(200).send(users);
+      } catch (err: any) {
+        fastify.log.error(err, 'Failed to fetch users');
+        return reply.code(500).send(DEFAULT_ERROR_RESPONSE);
+      }
+    },
+  );
 
-  fastify.patch<{ Params: { id: string }; Body: { baseCurrency: string } }>(
+  // GET /users/:id - get user by ID
+  server.get(
     '/:id',
+    {
+      schema: {
+        params: UserIdParamsSchema,
+        response: {
+          200: UserResponseSchema,
+          400: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      if (!isObjectIdOrHexString(id)) {
+        fastify.log.warn('Provided id is not valid');
+        return reply.code(400).send({
+          error: 'Bad Request',
+          message: 'Provided id is not valid',
+        });
+      }
+
+      try {
+        const user = await getUserById(id);
+        if (!user) {
+          return reply.code(404).send({
+            error: 'Not Found',
+            message: 'User not found',
+          });
+        }
+        return reply.code(200).send(user);
+      } catch (err: any) {
+        fastify.log.error(err, 'Failed to fetch user');
+        return reply.code(500).send(DEFAULT_ERROR_RESPONSE);
+      }
+    },
+  );
+
+  // PATCH /users/:id - update user base currency
+  server.patch(
+    '/:id',
+    {
+      schema: {
+        params: UserIdParamsSchema,
+        body: UpdateUserBaseCurrencySchema,
+        response: {
+          200: UserResponseSchema,
+          400: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
     async (request, reply) => {
       const { id } = request.params;
       const { baseCurrency } = request.body;
       if (!isObjectIdOrHexString(id)) {
         fastify.log.warn('Provided id is not valid');
-        return reply.code(400).send();
+        return reply.code(400).send({
+          error: 'Bad Request',
+          message: 'Provided id is not valid',
+        });
       }
-      const user = await User.findById(id);
-      if (!user) {
-        return reply.code(404).send();
+
+      try {
+        const user = await updateUserBaseCurrency(id, baseCurrency);
+        if (!user) {
+          return reply.code(404).send({
+            error: 'Not Found',
+            message: 'User not found',
+          });
+        }
+        return reply.code(200).send(user);
+      } catch (err: any) {
+        fastify.log.error(err, 'Failed to update user base currency');
+        return reply.code(500).send(DEFAULT_ERROR_RESPONSE);
       }
-      user.baseCurrency = baseCurrency;
-      await user.save();
-      return reply.code(200).send(user);
     },
   );
 
-  fastify.get<{ Params: { id: string } }>('/:id/currencies', async (request, reply) => {
-    const { id } = request.params;
-    if (!isObjectIdOrHexString(id)) {
-      fastify.log.warn('Provided id is not valid');
-      return reply.code(400).send();
-    }
-    const user = await User.findById(id);
-    if (!user) {
-      return reply.code(404).send();
-    }
-    const currencyCodes = await Transaction.distinct('currency', {
-      userId: user._id,
-    });
-    return reply.code(200).send(currencyCodes);
-  });
+  // GET /users/:id/currencies - distinct currency codes
+  server.get(
+    '/:id/currencies',
+    {
+      schema: {
+        params: UserIdParamsSchema,
+        response: {
+          200: UserCurrenciesResponseSchema,
+          400: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      if (!isObjectIdOrHexString(id)) {
+        fastify.log.warn('Provided id is not valid');
+        return reply.code(400).send({
+          error: 'Bad Request',
+          message: 'Provided id is not valid',
+        });
+      }
+
+      try {
+        const user = await getUserById(id);
+        if (!user) {
+          return reply.code(404).send({
+            error: 'Not Found',
+            message: 'User not found',
+          });
+        }
+        const currencyCodes = await getDistinctCurrenciesByUserId(user._id);
+        return reply.code(200).send(currencyCodes);
+      } catch (err: any) {
+        fastify.log.error(err, 'Failed to fetch user currencies');
+        return reply.code(500).send(DEFAULT_ERROR_RESPONSE);
+      }
+    },
+  );
+
+  // GET /users/:id/balances - calculation endpoint moved under user
+  server.get(
+    '/:id/balances',
+    {
+      schema: {
+        params: UserIdParamsSchema,
+        response: {
+          200: BalanceSummaryListSchema,
+          400: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      if (!isObjectIdOrHexString(id)) {
+        fastify.log.warn('Provided id is not valid');
+        return reply.code(400).send({
+          error: 'Bad Request',
+          message: 'Provided id is not valid',
+        });
+      }
+
+      try {
+        const user = await getUserById(id);
+        if (!user) {
+          return reply.code(404).send({
+            error: 'Not Found',
+            message: 'User not found',
+          });
+        }
+
+        const result = await getUserBalances(id);
+        return reply.code(200).send(result);
+      } catch (err: any) {
+        fastify.log.error(err, 'Failed to fetch user balances');
+        return reply.code(500).send(DEFAULT_ERROR_RESPONSE);
+      }
+    },
+  );
+
+  // GET /users/:id/exchange-disparity - calculation endpoint moved under user
+  server.get(
+    '/:id/exchange-disparity',
+    {
+      schema: {
+        params: UserIdParamsSchema,
+        response: {
+          200: ExchangeDisparityListSchema,
+          400: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      if (!isObjectIdOrHexString(id)) {
+        fastify.log.warn('Provided id is not valid');
+        return reply.code(400).send({
+          error: 'Bad Request',
+          message: 'Provided id is not valid',
+        });
+      }
+
+      try {
+        const user = await getUserById(id);
+        if (!user) {
+          return reply.code(404).send({
+            error: 'Not Found',
+            message: 'User not found',
+          });
+        }
+
+        const userAdjustmentsByCurrencyAndDay =
+          await getAdjustmentsByUserIdGroupedByCurrencyByDate(id);
+
+        request.log.info(
+          `Adjustments from user: ${JSON.stringify(userAdjustmentsByCurrencyAndDay)}`,
+        );
+
+        const result = await Promise.all(
+          Object.entries(userAdjustmentsByCurrencyAndDay).map(
+            async ([currencyKey, currencyData]) => {
+              const [baseCurrency, currency] = currencyKey.split('-');
+              const dateArray = Object.keys(currencyData).sort();
+              request.log.info(
+                `Dates from base currency: ${baseCurrency} and currency ${currency}`,
+              );
+
+              if (dateArray.length === 0) {
+                return null;
+              }
+
+              const from = dateArray[0];
+              const to = dateArray[dateArray.length - 1];
+
+              // get all exchanges rates by date
+              const rates = await fastify.currencyService.getExchangeRates({
+                baseCurrency,
+                targetCurrency: currency,
+                from,
+                to,
+              });
+              const sortedRates = [...rates].sort((a, b) => a.date.localeCompare(b.date));
+              request.log.info(`Rates for base currency: ${rates}`);
+
+              // ponderate baseAmount by amount of transactions to calculate total disparity
+              const totalAmountForPonderate = Object.values(currencyData).reduce(
+                (acc, dayData) => acc + dayData.baseAmount,
+                0,
+              );
+              request.log.info(`Total amount for ponderate: ${totalAmountForPonderate}`);
+
+              const ponderatedDisparity = Object.entries(currencyData).reduce(
+                (acc, [date, dayData]) => {
+                  let marketRateByDate: RateResponse | undefined;
+                  let previousRate: RateResponse | undefined;
+
+                  sortedRates.forEach((rate) => {
+                    if (marketRateByDate) {
+                      return;
+                    }
+
+                    if (rate.date === date) {
+                      marketRateByDate = rate;
+                    } else if (rate.date > date) {
+                      marketRateByDate = previousRate || rate;
+                    } else {
+                      previousRate = rate;
+                    }
+                  });
+
+                  if (!marketRateByDate) {
+                    marketRateByDate = previousRate ?? sortedRates[0];
+                  }
+
+                  if (marketRateByDate && marketRateByDate.date !== date) {
+                    request.log.warn(
+                      `Market rate not found for date ${date}, using closest rate from ${marketRateByDate.date}`,
+                    );
+                  }
+
+                  const marketRate = marketRateByDate?.rate;
+                  if (!marketRate) {
+                    return acc;
+                  }
+
+                  const realRate = dayData.appliedRate;
+
+                  request.log.debug(`Real rate on date ${date}: ${realRate}`);
+                  request.log.debug(`Market rate on date ${date}: ${marketRate}`);
+                  const deviationPercentage = ((realRate - marketRate) / marketRate) * 100;
+                  request.log.debug(`Deviation percentage on date ${date}: ${deviationPercentage}`);
+                  return acc + deviationPercentage * dayData.baseAmount;
+                },
+                0,
+              );
+              request.log.debug(`Ponderated disparity: ${ponderatedDisparity}`);
+
+              return {
+                baseCurrency,
+                currency,
+                disparity:
+                  totalAmountForPonderate > 0
+                    ? Number((ponderatedDisparity / totalAmountForPonderate).toFixed(2))
+                    : 0,
+              };
+            },
+          ),
+        );
+
+        const filteredResult = result.filter(
+          (item): item is NonNullable<typeof item> => item !== null,
+        );
+
+        request.log.info(`Final result: ${JSON.stringify(filteredResult)}`);
+
+        return reply.code(200).send(filteredResult);
+      } catch (err: any) {
+        fastify.log.error(err, 'Failed to calculate exchange disparity');
+        return reply.code(500).send(DEFAULT_ERROR_RESPONSE);
+      }
+    },
+  );
 };
 
 export default userRoutes;

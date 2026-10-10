@@ -40,17 +40,12 @@ export class TransactionService {
   }
 
   getUserBalances(userId: string): Observable<Balance[]> {
-    return this.httpClient.get<Balance[]>(this.baseUrl + '/transactions/balances', {
-      params: { userId },
-    });
+    return this.httpClient.get<Balance[]>(`${this.baseUrl}/users/${userId}/balances`);
   }
 
   getUserExchangeRateDisparity(userId: string): Observable<ExchangeDisparity[]> {
     return this.httpClient.get<ExchangeDisparity[]>(
-      this.baseUrl + '/transactions/exchange-disparity',
-      {
-        params: { userId },
-      },
+      `${this.baseUrl}/users/${userId}/exchange-disparity`,
     );
   }
 }

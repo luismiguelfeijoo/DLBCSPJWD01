@@ -1,6 +1,34 @@
 import { model, Schema, Types } from 'mongoose';
 
-// 1. Create a Schema corresponding to the document interface.
+// Interfaces for db interaction with Transaction model
+export interface Transaction {
+  userId: Types.ObjectId;
+  type: 'sale' | 'adjustment';
+  amount: number;
+  currency: string;
+  baseAmount: number;
+  baseCurrency: string;
+  exchangeRate: number;
+  date: string;
+  description?: string;
+}
+
+export interface CurrencyDataByDate {
+  [currencyKey: string]: {
+    [date: string]: {
+      amount: number;
+      baseAmount: number;
+      appliedRate: number;
+    };
+  };
+}
+
+export interface BalanceSummary {
+  currency: string;
+  total: number;
+}
+
+// Create a Schema corresponding to the document interface.
 const transactionSchema = new Schema(
   {
     userId: {
@@ -71,21 +99,137 @@ const transactionSchema = new Schema(
   },
 );
 
-// 2. Create a Model.
-export const Transaction = model('Transaction', transactionSchema);
+// Mongoose Model for db interaction
+export const TransactionModel = model<Transaction>('Transaction', transactionSchema);
 
-export interface CurrencyDataByDate {
-  [currencyKey: string]: {
-    [date: string]: {
-      amount: number;
-      baseAmount: number;
-      appliedRate: number;
+// Queries for data processing
+export const getTransactionsByUserId = async (userId: string | Types.ObjectId, type?: string) => {
+  const userObjectId = typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
+  const filter: Record<string, any> = { userId: userObjectId };
+  if (type) {
+    filter.type = type;
+  }
+  return TransactionModel.find(filter);
+};
+
+/**
+ * Get user balances
+ * @param userId - Id of the user
+ * @returns {@link Promise<BalanceSummary[]>} - Object with balances by currency
+ */
+export const getUserBalances = async (
+  userId: string | Types.ObjectId,
+): Promise<BalanceSummary[]> => {
+  const userObjectId = typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
+
+  const sales = await TransactionModel.aggregate<{
+    userId: Types.ObjectId;
+    currency: string;
+    totalSales: number;
+  }>([
+    {
+      $match: {
+        userId: userObjectId,
+      },
+    },
+    {
+      // Group primarily by currency
+      $group: {
+        _id: {
+          userId: '$userId',
+          currency: '$currency',
+        },
+        totalSales: {
+          $sum: '$amount',
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        userId: '$_id.userId',
+        currency: '$_id.currency',
+        totalSales: 1,
+      },
+    },
+    {
+      $sort: { currency: -1 },
+    },
+  ]);
+
+  const adjustments = await TransactionModel.aggregate<{
+    userId: Types.ObjectId;
+    currency: string;
+    totalAdjustments: number;
+  }>([
+    {
+      $match: {
+        userId: userObjectId,
+        type: 'adjustment',
+      },
+    },
+    {
+      // Group primarily by currency
+      $group: {
+        _id: {
+          userId: '$userId',
+          currency: '$baseCurrency',
+        },
+        totalAdjustments: {
+          $sum: '$baseAmount',
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        userId: '$_id.userId',
+        currency: '$_id.currency',
+        totalAdjustments: 1,
+      },
+    },
+    {
+      $sort: { currency: -1 },
+    },
+  ]);
+
+  return sales.map((sale) => {
+    const adjustmentAmount = adjustments.reduce(
+      (acc, adjustment) =>
+        acc + (adjustment.currency === sale.currency ? adjustment.totalAdjustments : 0),
+      0,
+    );
+    return {
+      currency: sale.currency,
+      total: sale.totalSales - adjustmentAmount,
     };
-  };
-}
-// 3. Queries for data processing
-export const getAdjustmentsByUserIdGroupedByCurrencyByDate = async (userId: Types.ObjectId) => {
-  const adjustmentsByDate = await Transaction.aggregate<{
+  });
+};
+
+/**
+ * Get distinct currencies by user Id
+ * @param userId - Id of the user
+ * @returns {@link Promise<string[]>}
+ */
+export const getDistinctCurrenciesByUserId = async (userId: string | Types.ObjectId) => {
+  const userObjectId = typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
+  // TODO: fix this type issue, so far haven't found the proper usage in the docs
+  return TransactionModel.distinct<string>('currency', { userId: userObjectId }) as Promise<
+    string[]
+  >;
+};
+
+/**
+ * Get transaction adjustments grouped by currency and date
+ * transformed as an object of rate exchanges by date
+ * @param userId - Id of the user
+ * @returns {@link Promise<CurrencyDataByDate>} - Object with rate exchanges by date
+ */
+export const getAdjustmentsByUserIdGroupedByCurrencyByDate = async (
+  userId: string | Types.ObjectId,
+) => {
+  const userObjectId = typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
+  const adjustmentsByDate = await TransactionModel.aggregate<{
     baseCurrency: string;
     currency: string;
     date: string;
@@ -95,7 +239,7 @@ export const getAdjustmentsByUserIdGroupedByCurrencyByDate = async (userId: Type
   }>([
     {
       $match: {
-        userId: userId,
+        userId: userObjectId,
         type: 'adjustment',
       },
     },
@@ -105,7 +249,7 @@ export const getAdjustmentsByUserIdGroupedByCurrencyByDate = async (userId: Type
         _id: {
           baseCurrency: '$baseCurrency',
           currency: '$currency',
-          dateStr: { $dateToString: { format: '\%Y-\%m-\%d', date: '$date' } },
+          dateStr: { $dateToString: { format: '%Y-%m-%d', date: '$date' } },
         },
         // Total amounts of the specific day
         totalAmount: { $sum: '$amount' },
@@ -125,9 +269,6 @@ export const getAdjustmentsByUserIdGroupedByCurrencyByDate = async (userId: Type
       },
     },
   ]);
-
-  console.log('Adjustments by date', JSON.stringify(adjustmentsByDate));
-
   // map data to object for simplicity
 
   return adjustmentsByDate.reduce((acc, current) => {

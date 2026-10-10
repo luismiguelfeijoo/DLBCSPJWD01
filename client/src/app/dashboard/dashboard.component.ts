@@ -79,7 +79,6 @@ export class DashboardComponent {
     this.currentRouteEvent();
     const currentPath = this.router.url;
     const matchedItem = this.navItems.find((item) => currentPath.includes(item.path));
-    console.log(matchedItem);
     return matchedItem ? matchedItem.label : 'Dashboard';
   });
 

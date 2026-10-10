@@ -10,7 +10,7 @@
       <input
         matInput
         formControlName="description"
-        placeholder="e.g., POS Purchase, Adjustment..."
+        [placeholder]="mode() === 'sale' ? 'Product x' : 'Currency adjustment'"
       />
       <mat-icon matSuffix>description</mat-icon>
       @if (form.controls.description.hasError('maxlength')) {
@@ -63,7 +63,7 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="col-span-2 sm:col-span-3">
-        <mat-label>Price</mat-label>
+        <mat-label>{{ baseCurrencyLabel() }}</mat-label>
         <input
           matInput
           type="number"
@@ -97,7 +97,7 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="col-span-2 sm:col-span-3">
-        <mat-label>Client pays</mat-label>
+        <mat-label>{{ currencyLabel() }}</mat-label>
         <input
           matInput
           type="number"

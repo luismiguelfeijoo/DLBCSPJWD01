@@ -185,7 +185,9 @@ export const TransactionStore = signalStore(
                 next: (rates) => {
                   patchState(store, {
                     isLoadingRates: false,
-                    rates,
+                    rates: rates.sort(
+                      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+                    ),
                   });
                 },
                 error: (error) => {
@@ -276,7 +278,6 @@ export const TransactionStore = signalStore(
                       adjustments: [...state.adjustments, newTransaction],
                     }));
                     store._loadBalances(store._userStore.selectedUser()?.id!);
-                    store._loadDisparities(store._userStore.selectedUser()?.id!);
                     store._loadDisparities(store._userStore.selectedUser()?.id!);
                   },
                   error: (error) => {
