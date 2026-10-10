@@ -1,11 +1,11 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { CurrencyStore } from '../../../core/store/currency.store';
 import { TransactionStore } from '../../../core/store/transaction.store';
 
 @Component({
   selector: 'app-currency-balance',
-  imports: [NgxChartsModule],
+  imports: [DecimalPipe],
   template: `
     <div class="flex flex-wrap gap-1 sm:gap-2">
       @for (item of data(); track item.name) {

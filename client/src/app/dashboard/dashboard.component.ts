@@ -1,9 +1,7 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
@@ -30,10 +28,8 @@ import { CurrencyStore } from '../core/store/currency.store';
     MatIconModule,
     MatToolbarModule,
     MatButtonModule,
-    MatBadgeModule,
     MatMenuModule,
     MatSelectModule,
-    MatFormFieldModule,
     ReactiveFormsModule,
   ],
   templateUrl: './dashboard.component.html',
@@ -45,7 +41,6 @@ export class DashboardComponent {
   private currencyStore = inject(CurrencyStore);
 
   private router = inject(Router);
-  protected readonly title = signal('client');
 
   selectedUser = this.userStore.selectedUser;
   currencies = this.currencyStore.currencies;
@@ -99,10 +94,6 @@ export class DashboardComponent {
   // Action Methods using Signals
   toggleDrawer(): void {
     this.isDrawerOpen.update((state) => !state);
-  }
-
-  toggleSidenav(): void {
-    this.toggleDrawer();
   }
 
   onNavItemClick(): void {

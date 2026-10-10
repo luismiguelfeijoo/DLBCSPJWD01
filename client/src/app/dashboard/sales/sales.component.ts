@@ -4,11 +4,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
+import { CurrencyStore } from '../../core/store/currency.store';
 import { TransactionStore } from '../../core/store/transaction.store';
 import { UserStore } from '../../core/store/user.store';
 import { TransactionFormComponent } from '../transaction-form/transaction-form.component';
-import { TransactionService } from '../../core/service/transaction.service';
-import { CurrencyStore } from '../../core/store/currency.store';
 
 @Component({
   selector: 'app-sales',
@@ -21,8 +20,6 @@ export class SalesComponent {
   private userStore = inject(UserStore);
   private dialog = inject(MatDialog);
   private injector = inject(Injector);
-
-  isLoading = this.transactionStore.isLoadingSales;
 
   sales = computed(() =>
     this.transactionStore.sales().map((sale) => {
@@ -38,7 +35,6 @@ export class SalesComponent {
       };
     }),
   );
-  baseCurrency = computed(() => this.userStore.selectedUser()?.baseCurrency);
   displayedColumns = ['date', 'description', 'amount', 'currency', 'exchangeRate'];
 
   openNewSale() {
