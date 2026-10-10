@@ -19,6 +19,7 @@ import { TransactionService } from '../service/transaction.service';
 import { UserStore } from './user.store';
 import { Balance } from '../model/balance.model';
 import { CurrencyStore } from './currency.store';
+import { ExchangeDisparity } from '../model/exchange-disparity';
 
 type TransactionsState = {
   sales: Transaction[];
@@ -26,10 +27,12 @@ type TransactionsState = {
   targetCurrency: Currency | null;
   rates: Rate[];
   balances: Balance[];
+  disparities: ExchangeDisparity[];
   isLoadingBalances: boolean;
   isLoadingRates: boolean;
   isLoadingSales: boolean;
   isLoadingAdjustments: boolean;
+  isLoadingDisparities: boolean;
   isSaving: boolean;
 };
 
@@ -39,10 +42,12 @@ const initialState: TransactionsState = {
   targetCurrency: null,
   rates: [],
   balances: [],
+  disparities: [],
   isLoadingBalances: false,
   isLoadingRates: false,
   isLoadingSales: false,
   isLoadingAdjustments: false,
+  isLoadingDisparities: false,
   isSaving: false,
 };
 
@@ -140,6 +145,28 @@ export const TransactionStore = signalStore(
         ),
       ),
     ),
+    _loadDisparities: rxMethod<string>(
+      pipe(
+        tap(() => {
+          patchState(store, { isLoadingDisparities: true });
+        }),
+        switchMap((userId) =>
+          store._transactionService.getUserExchangeRateDisparity(userId).pipe(
+            tapResponse({
+              next: (disparities) => {
+                patchState(store, {
+                  isLoadingDisparities: false,
+                  disparities,
+                });
+              },
+              error: (error) => {
+                patchState(store, { isLoadingDisparities: false });
+              },
+            }),
+          ),
+        ),
+      ),
+    ),
     loadRates: rxMethod<{ targetCurrencyCode: string; baseCurrencyCode: string }>(
       pipe(
         tap(() => {
@@ -205,6 +232,7 @@ export const TransactionStore = signalStore(
                       sales: [...state.sales, newTransaction],
                     }));
                     store._loadBalances(store._userStore.selectedUser()?.id!);
+                    store._loadDisparities(store._userStore.selectedUser()?.id!);
                   },
                   error: (error) => {
                     patchState(store, { isSaving: false });
@@ -248,6 +276,8 @@ export const TransactionStore = signalStore(
                       adjustments: [...state.adjustments, newTransaction],
                     }));
                     store._loadBalances(store._userStore.selectedUser()?.id!);
+                    store._loadDisparities(store._userStore.selectedUser()?.id!);
+                    store._loadDisparities(store._userStore.selectedUser()?.id!);
                   },
                   error: (error) => {
                     patchState(store, { isSaving: false });
@@ -265,6 +295,7 @@ export const TransactionStore = signalStore(
         store.loadSales(selectedUser.id);
         store.loadAdjustments(selectedUser.id);
         store._loadBalances(selectedUser.id);
+        store._loadDisparities(selectedUser.id);
       }
     },
   }),

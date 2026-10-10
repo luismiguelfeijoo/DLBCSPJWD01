@@ -3,6 +3,7 @@ import { inject, Service } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Transaction } from '../model/transaction.model';
 import { Balance } from '../model/balance.model';
+import { ExchangeDisparity } from '../model/exchange-disparity';
 
 @Service()
 export class TransactionService {
@@ -42,5 +43,14 @@ export class TransactionService {
     return this.httpClient.get<Balance[]>(this.baseUrl + '/transactions/balances', {
       params: { userId },
     });
+  }
+
+  getUserExchangeRateDisparity(userId: string): Observable<ExchangeDisparity[]> {
+    return this.httpClient.get<ExchangeDisparity[]>(
+      this.baseUrl + '/transactions/exchange-disparity',
+      {
+        params: { userId },
+      },
+    );
   }
 }

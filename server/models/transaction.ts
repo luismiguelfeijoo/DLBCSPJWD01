@@ -73,3 +73,81 @@ const transactionSchema = new Schema(
 
 // 2. Create a Model.
 export const Transaction = model('Transaction', transactionSchema);
+
+export interface CurrencyDataByDate {
+  [currencyKey: string]: {
+    [date: string]: {
+      amount: number;
+      baseAmount: number;
+      appliedRate: number;
+    };
+  };
+}
+// 3. Queries for data processing
+export const getAdjustmentsByUserIdGroupedByCurrencyByDate = async (userId: Types.ObjectId) => {
+  const adjustmentsByDate = await Transaction.aggregate<{
+    baseCurrency: string;
+    currency: string;
+    date: string;
+    amount: number;
+    baseAmount: number;
+    appliedRate: number;
+  }>([
+    {
+      $match: {
+        userId: userId,
+        type: 'adjustment',
+      },
+    },
+    {
+      $group: {
+        // group by base currency, currency and date
+        _id: {
+          baseCurrency: '$baseCurrency',
+          currency: '$currency',
+          dateStr: { $dateToString: { format: '\%Y-\%m-\%d', date: '$date' } },
+        },
+        // Total amounts of the specific day
+        totalAmount: { $sum: '$amount' },
+        totalBaseAmount: { $sum: '$baseAmount' },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        baseCurrency: '$_id.baseCurrency',
+        currency: '$_id.currency',
+        date: '$_id.dateStr',
+        amount: '$totalAmount',
+        baseAmount: '$totalBaseAmount',
+        // Effective daily applied rate = totalAmount / totalBaseAmount
+        appliedRate: { $divide: ['$totalAmount', '$totalBaseAmount'] },
+      },
+    },
+  ]);
+
+  console.log('Adjustments by date', JSON.stringify(adjustmentsByDate));
+
+  // map data to object for simplicity
+
+  return adjustmentsByDate.reduce((acc, current) => {
+    const { baseCurrency, currency, date, amount, baseAmount, appliedRate } = current;
+    const currencyKey = `${baseCurrency}-${currency}`;
+    // get existing currency, to add data by date
+    let currencyData = acc[currencyKey];
+    if (!currencyData) {
+      // if not exist create an empty object
+      currencyData = {};
+    }
+    // no need to check existing date, because it is part of the grouped query result
+    currencyData[date] = {
+      amount,
+      baseAmount,
+      appliedRate,
+    };
+
+    acc[currencyKey] = currencyData;
+
+    return acc;
+  }, {} as CurrencyDataByDate);
+};

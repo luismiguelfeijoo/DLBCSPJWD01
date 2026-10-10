@@ -1,10 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
-import { TransactionStore } from '../../../core/store/transaction.store';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
 import { CurrencyStore } from '../../../core/store/currency.store';
+import { TransactionStore } from '../../../core/store/transaction.store';
 
 @Component({
   selector: 'app-currency-balance',
@@ -26,15 +23,6 @@ export class CurrencyBalanceComponent {
   private transactionStore = inject(TransactionStore);
   private currencyStore = inject(CurrencyStore);
 
-  private breakpointObserver = inject(BreakpointObserver);
-
-  // Tailwind 'sm' breakpoint is 640px (< 640px is small screen / mobile)
-  readonly isSmallScreen = toSignal(
-    this.breakpointObserver.observe('(max-width: 639px)').pipe(map((res) => res.matches)),
-    { initialValue: window?.innerWidth < 640 },
-  );
-
-  view = [];
   data = computed(() =>
     this.transactionStore
       .balances()

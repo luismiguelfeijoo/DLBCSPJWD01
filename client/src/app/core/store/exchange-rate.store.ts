@@ -125,14 +125,6 @@ export const ExchangeRateStore = signalStore(
       if (selectedUser?.id) {
         store.loadUserCurrencies(selectedUser.id);
       }
-      //   effect(() => {
-      //     const currencyCodes = store._currencyCodes();
-      //     if (currencyCodes) {
-      //       store.loadExchangeRates(currencyCodes);
-      //     } else {
-      //       patchState(store, { exchangeRatesByCurrency: null });
-      //     }
-      //   });
     },
   }),
 );
