@@ -7,11 +7,14 @@ import { map } from 'rxjs';
 import { CurrencyStore } from '../../../core/store/currency.store';
 
 @Component({
-  selector: 'app-currency-balance-graph',
+  selector: 'app-exchange-rate-comparision-graph',
   imports: [NgxChartsModule],
-  template: ` <ngx-charts-pie-grid [results]="data()"> </ngx-charts-pie-grid> `,
+  template: `
+    <ngx-charts-bar-horizontal [results]="disparityData" xAxis="true" yAxis="true" roundBars="true">
+    </ngx-charts-bar-horizontal>
+  `,
 })
-export class CurrencyBalanceGraphComponent {
+export class ExchangeRateComparisionGraphComponent {
   private transactionStore = inject(TransactionStore);
   private currencyStore = inject(CurrencyStore);
 
@@ -22,6 +25,12 @@ export class CurrencyBalanceGraphComponent {
     this.breakpointObserver.observe('(max-width: 639px)').pipe(map((res) => res.matches)),
     { initialValue: window?.innerWidth < 640 },
   );
+
+  disparityData = [
+    { name: 'USD / EUR', value: -1.63 }, // -1.63% below benchmark
+    { name: 'GBP / EUR', value: -0.25 }, // -0.25% below benchmark
+    { name: 'CAD / EUR', value: 0.3 }, // +0.30% above benchmark
+  ];
 
   view = [];
   data = computed(() =>

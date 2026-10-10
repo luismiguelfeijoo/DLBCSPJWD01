@@ -3,5 +3,4 @@ export interface Rate {
   quote: string;
   rate: number;
   date: string;
-  // label: string;
 }

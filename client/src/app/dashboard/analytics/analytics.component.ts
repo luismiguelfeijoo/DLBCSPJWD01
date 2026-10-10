@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, Injector } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { CurrencyBalanceGraphComponent } from './currency-balance-graph/currency-balance-graph.component';
+import { CurrencyBalanceComponent } from './currency-balance/currency-balance.component';
 import { HistoricalExchangeRateGraphComponent } from './historical-exchange-rate-graph/historical-exchange-rate-graph.component';
 import { ExchangeRateStore } from '../../core/store/exchange-rate.store';
 import { TransactionStore } from '../../core/store/transaction.store';
@@ -9,6 +9,7 @@ import { TransactionFormComponent } from '../transaction-form/transaction-form.c
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { CurrencyStore } from '../../core/store/currency.store';
+import { ExchangeRateComparisionGraphComponent } from './exchange-rate-comparision/exchange-rate-comparision.component';
 
 @Component({
   selector: 'app-analytics',
@@ -16,8 +17,9 @@ import { CurrencyStore } from '../../core/store/currency.store';
     MatCardModule,
     MatIconModule,
     MatButtonModule,
-    CurrencyBalanceGraphComponent,
+    CurrencyBalanceComponent,
     HistoricalExchangeRateGraphComponent,
+    ExchangeRateComparisionGraphComponent,
   ],
   templateUrl: './analytics.component.html',
   providers: [ExchangeRateStore],

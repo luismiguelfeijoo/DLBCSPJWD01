@@ -45,11 +45,15 @@ export const ExchangeRateStore = signalStore(
       _userStore,
     }),
   ),
-  withComputed(({ _currencyStore, _currencyCodes }) => ({
+  withComputed(({ _currencyStore, _currencyCodes, _userStore }) => ({
     currencyOptions: computed<Currency[]>(() =>
       _currencyStore
         .currencies()
-        ?.filter((currency) => _currencyCodes().includes(currency.isoCode)),
+        ?.filter(
+          (currency) =>
+            _currencyCodes().includes(currency.isoCode) &&
+            currency.isoCode !== _userStore.selectedUser()?.baseCurrency,
+        ),
     ),
   })),
   withMethods((store) => ({
@@ -121,14 +125,14 @@ export const ExchangeRateStore = signalStore(
       if (selectedUser?.id) {
         store.loadUserCurrencies(selectedUser.id);
       }
-      effect(() => {
-        const currencyCodes = store._currencyCodes();
-        if (currencyCodes) {
-          store.loadExchangeRates(currencyCodes);
-        } else {
-          patchState(store, { exchangeRatesByCurrency: null });
-        }
-      });
+      //   effect(() => {
+      //     const currencyCodes = store._currencyCodes();
+      //     if (currencyCodes) {
+      //       store.loadExchangeRates(currencyCodes);
+      //     } else {
+      //       patchState(store, { exchangeRatesByCurrency: null });
+      //     }
+      //   });
     },
   }),
 );
