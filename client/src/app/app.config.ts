@@ -9,6 +9,8 @@ import { UserService } from './core/service/user.service';
 import { UserStore } from './core/store/user.store';
 import { registerLocaleData } from '@angular/common';
 import localeEnIe from '@angular/common/locales/en-IE';
+import { API_URL } from './core/tokens/api-url.token';
+import { environment } from '../environments/environment';
 
 registerLocaleData(localeEnIe);
 
@@ -21,6 +23,7 @@ export const appConfig: ApplicationConfig = {
     provideNativeDateAdapter(),
     { provide: LOCALE_ID, useValue: 'en-IE' },
     { provide: MAT_DATE_LOCALE, useValue: 'en-IE' },
+    { provide: API_URL, useValue: environment.apiUrl },
     UserService,
     UserStore,
   ],

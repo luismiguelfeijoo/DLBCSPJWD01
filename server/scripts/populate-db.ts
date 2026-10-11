@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { User } from '../models/user.ts';
+import { UserModel } from '../models/user.ts';
 
 process.loadEnvFile();
 
@@ -10,21 +10,21 @@ if (!process.env.MONGODB_URI) {
 await mongoose.connect(process.env.MONGODB_URI);
 
 const users = [
-  new User({
+  new UserModel({
     name: 'Luis Feijoo',
     email: 'luis@feijoo.com',
-    baseCurrency: 'USD'
+    baseCurrency: 'USD',
   }),
-  new User({
+  new UserModel({
     name: 'Miguel Jorge',
     email: 'miguel@jorge.com',
-    baseCurrency: 'USD'
+    baseCurrency: 'USD',
   }),
-  new User({
+  new UserModel({
     name: 'Peter Smith',
     email: 'peter@smith.com',
-    baseCurrency: 'USD'
-  })
+    baseCurrency: 'USD',
+  }),
 ];
 
-Promise.all(users.map(async (user) => await user.save()));
+Promise.all(users.map(async (user) => await user.save())).then(() => process.exit());
