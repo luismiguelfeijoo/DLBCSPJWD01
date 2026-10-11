@@ -1,3 +1,13 @@
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+
+# Editor specific
+.vscode/
+!.vscode/extensions.json
+
 # Angular specific
 /dist/
 /out-tsc/
@@ -8,9 +18,7 @@
 .angular/
 
 # Node modules and dependency files
-/node_modules/
-/package-lock.json
-/yarn.lock
+node_modules/
 
 # Environment files
 /.env

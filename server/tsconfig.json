@@ -1,0 +1,7 @@
+{
+  "extends": "fastify-tsconfig",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  }
+}

@@ -1,0 +1,83 @@
+<div class="flex flex-col h-screen overflow-hidden">
+  <mat-toolbar
+    class="shrink-0 flex justify-between items-center px-4 shadow-sm z-10 !text-[var(--mat-sys-primary)] !bg-[var(--mat-sys-primary-container)]"
+  >
+    <div class="flex items-center gap-3">
+      <button
+        matIconButton
+        (click)="toggleDrawer()"
+        aria-label="Toggle menu"
+        class="!text-[var(--mat-sys-primary)]"
+      >
+        <mat-icon>menu</mat-icon>
+      </button>
+      <span class="text-sm font-medium">{{ currentPageTitle() }}</span>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <span class="mx-2 opacity-60">|</span>
+
+      <mat-select
+        [formControl]="currencyControl"
+        (selectionChange)="onCurrencyChange($event.value)"
+        panelWidth="8rem"
+        class="w-24 px-3 py-1.5 rounded-md bg-white/50 hover:bg-white/80 !text-[var(--mat-sys-primary)] cursor-pointer [&_.mat-mdc-select-arrow-wrapper]:!pl-2 [&_.mat-mdc-select-arrow]:!text-[var(--mat-sys-primary)]"
+      >
+        @for (currency of currencies(); track currency.isoCode) {
+          <mat-option [value]="currency.isoCode">
+            <span class="font-bold mr-2">{{ currency.isoCode }}</span>
+          </mat-option>
+        }
+      </mat-select>
+
+      <button
+        mat-button
+        color="primary"
+        [matMenuTriggerFor]="userMenu"
+        class="flex items-center gap-2"
+      >
+        <mat-icon>account_circle</mat-icon>
+      </button>
+
+      <mat-menu #userMenu="matMenu">
+        <div class="px-4 py-2">
+          <p class="font-semibold text-sm">{{ selectedUser()?.name }}</p>
+          <p class="text-xs opacity-75">{{ selectedUser()?.email }}</p>
+        </div>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Sign Out</span>
+        </button>
+      </mat-menu>
+    </div>
+  </mat-toolbar>
+
+  <mat-drawer-container class="grow" [hasBackdrop]="isSmallScreen()">
+    <mat-drawer
+      #drawer
+      [opened]="isDrawerOpen()"
+      [mode]="isSmallScreen() ? 'over' : 'side'"
+      (closed)="isDrawerOpen.set(false)"
+      class="p-3 !rounded-none !w-fit !border-r !border-[var(--mat-sys-outline-variant)]"
+    >
+      <mat-nav-list class="flex flex-col gap-3 w-fit">
+        @for (item of navItems; track item.path) {
+          <a
+            mat-list-item
+            [routerLink]="item.path"
+            routerLinkActive="active-link"
+            [attr.aria-label]="item.label"
+            (click)="onNavItemClick()"
+          >
+            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+            <span matListItemTitle>{{ item.label }}</span>
+          </a>
+        }
+      </mat-nav-list>
+    </mat-drawer>
+
+    <mat-drawer-content class="p-2 md:p-4">
+      <router-outlet></router-outlet>
+    </mat-drawer-content>
+  </mat-drawer-container>
+</div>

@@ -1,0 +1,62 @@
+<div class="md:p-4 p-0 min-h-screen">
+  <!-- Tailwind Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 md:gap-2 gap-1">
+    <!-- Card 1: Sales by Currency -->
+    <mat-card
+      appearance="outlined"
+      class="flex flex-col rounded-2xl shadow-sm overflow-hidden col-span-1 md:col-span-2 xl:col-span-4"
+    >
+      <mat-card-header class="mb-4">
+        <mat-card-title> Totals by currency </mat-card-title>
+        <mat-card-subtitle> Net amount per currency code </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content class="flex-1 w-full pt-4">
+        <app-currency-balance></app-currency-balance>
+        <div class="mt-4 flex justify-end w-full">
+          <button
+            mat-flat-button
+            color="primary"
+            class="flex items-center gap-1.5 grow sm:grow-0"
+            (click)="openNewAdjustment()"
+          >
+            <mat-icon>currency_exchange</mat-icon>
+            <span>Register Currency Exchange</span>
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Card 2: Disparities / Distribution -->
+    <mat-card
+      appearance="outlined"
+      class="flex flex-col rounded-2xl shadow-sm overflow-hidden col-span-1 md:col-span-2"
+    >
+      <mat-card-header class="pb-2">
+        <mat-card-title>Volume Disparity</mat-card-title>
+        <mat-card-subtitle>Percentage distribution</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content class="flex-1 w-full pt-4">
+        <div class="h-72 w-full">
+          <app-exchange-rate-comparision-graph></app-exchange-rate-comparision-graph>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <!-- Card 3: Currencies over Time -->
+    <mat-card
+      appearance="outlined"
+      class="flex flex-col rounded-2xl shadow-sm overflow-hidden col-span-1 md:col-span-2"
+    >
+      <mat-card-header class="pb-2">
+        <mat-card-title>Historical rate changes</mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content class="flex-1 w-full pt-4">
+        <div class="h-50 w-full">
+          <app-historical-exchange-rate-graph></app-historical-exchange-rate-graph>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
