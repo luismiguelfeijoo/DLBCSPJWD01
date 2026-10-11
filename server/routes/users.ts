@@ -21,10 +21,23 @@ import {
   UsersResponseSchema,
 } from '../schemas/user.schema.ts';
 
+/**
+ * User Route Plugin
+ * Registers RESTful endpoints under `/users`:
+ * - GET /users - list all users
+ * - GET /users/:id - get user by ID
+ * - PATCH /users/:id - update user base currency
+ * - GET /users/:id/currencies - list distinct currencies used by user
+ * - GET /users/:id/balances - get aggregated net balances per currency
+ * - GET /users/:id/exchange-disparity - calculate volume-weighted exchange rate disparities
+ */
 const userRoutes: FastifyPluginCallback = (fastify, _) => {
   const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
-  // GET /users - list all users
+  /**
+   * GET /users
+   * Retrieves the list of all registered users.
+   */
   server.get(
     '/',
     {
@@ -46,7 +59,10 @@ const userRoutes: FastifyPluginCallback = (fastify, _) => {
     },
   );
 
-  // GET /users/:id - get user by ID
+  /**
+   * GET /users/:id
+   * Retrieves a single user profile by MongoDB ObjectId.
+   */
   server.get(
     '/:id',
     {
@@ -86,7 +102,10 @@ const userRoutes: FastifyPluginCallback = (fastify, _) => {
     },
   );
 
-  // PATCH /users/:id - update user base currency
+  /**
+   * PATCH /users/:id
+   * Updates the base currency configuration for a specific user.
+   */
   server.patch(
     '/:id',
     {
@@ -128,7 +147,10 @@ const userRoutes: FastifyPluginCallback = (fastify, _) => {
     },
   );
 
-  // GET /users/:id/currencies - distinct currency codes
+  /**
+   * GET /users/:id/currencies
+   * Retrieves all distinct currency codes that have appeared in the user's transactions.
+   */
   server.get(
     '/:id/currencies',
     {
@@ -211,7 +233,21 @@ const userRoutes: FastifyPluginCallback = (fastify, _) => {
     },
   );
 
-  // GET /users/:id/exchange-disparity - calculation endpoint moved under user
+  /**
+   * GET /users/:id/exchange-disparity
+   *
+   * Calculates the volume-weighted percentage disparity between exchange rates
+   * actually applied during the user's currency adjustments and benchmark market rates.
+   *
+   * Financial Formula & Algorithm:
+   * 1. Aggregate past adjustments into daily buckets per currency pair (`baseCurrency-currency`).
+   * 2. Find min and max transaction dates to query market rates from the external API in one batch.
+   * 3. For each adjustment day, find the exact market rate (or fall back to closest previous trading day
+   *    if transactions occurred over a weekend or public holiday).
+   * 4. Compute deviation percentage: `deviation% = ((appliedRate - marketRate) / marketRate) * 100`.
+   * 5. Weight deviation by the transaction volume (`baseAmount`).
+   * 6. Calculate weighted average disparity: `totalWeightedDeviation / totalBaseAmount`.
+   */
   server.get(
     '/:id/exchange-disparity',
     {

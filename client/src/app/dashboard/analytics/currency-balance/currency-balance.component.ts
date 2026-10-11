@@ -20,9 +20,14 @@ import { TransactionStore } from '../../../core/store/transaction.store';
   `,
 })
 export class CurrencyBalanceComponent {
+  // Dependencies / Injected Services
   private transactionStore = inject(TransactionStore);
   private currencyStore = inject(CurrencyStore);
 
+  // Computed Signals
+  /**
+   * Filters out zero/empty balances and maps active currency balances with matching currency symbols.
+   */
   data = computed(() =>
     this.transactionStore
       .balances()

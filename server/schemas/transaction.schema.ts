@@ -67,7 +67,7 @@ export const TransactionResponseSchema = Type.Object({
   currency: Type.String(),
   exchangeRate: Type.Number(),
   date: Type.String(),
-  description: Type.String(),
+  description: Type.Optional(Type.String()),
   createdAt: Type.Optional(Type.String()),
   updatedAt: Type.Optional(Type.String()),
 });

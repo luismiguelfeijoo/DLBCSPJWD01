@@ -39,9 +39,15 @@ import { ExchangeRateStore } from '../../../core/store/exchange-rate.store';
   `,
 })
 export class HistoricalExchangeRateGraphComponent {
+  // Dependencies / Injected Services
   private exchangeRateStore = inject(ExchangeRateStore);
+
+  // Component State & Properties
   selectedCurrency = signal<Currency | null>(null);
   currencyOptions = this.exchangeRateStore.currencyOptions;
+
+  // Effects
+  /** Automatically triggers loading historical exchange rates when a currency is selected */
   private _currencyWatcher = effect(() => {
     const selectedCurrency = this.selectedCurrency();
     if (selectedCurrency) {
@@ -49,6 +55,8 @@ export class HistoricalExchangeRateGraphComponent {
     }
   });
 
+  // Computed Signals
+  /** Formats exchange rates by currency into series for ngx-charts-line-chart */
   data = computed(() => {
     const exchangeRates = this.exchangeRateStore.exchangeRatesByCurrency();
     if (!exchangeRates) {

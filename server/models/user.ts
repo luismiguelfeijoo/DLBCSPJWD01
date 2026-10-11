@@ -37,14 +37,33 @@ const userSchema = new Schema(
 export const UserModel = model<User>('User', userSchema);
 
 // Queries for data processing
+
+/**
+ * Retrieves all registered users from the database.
+ *
+ * @returns {Promise<User[]>} Array of all user documents
+ */
 export const getAllUsers = async () => {
   return UserModel.find();
 };
 
+/**
+ * Retrieves a single user by their MongoDB ObjectId.
+ *
+ * @param id - The user ID as a string or ObjectId
+ * @returns {Promise<User | null>} The user document if found, null otherwise
+ */
 export const getUserById = async (id: string | Types.ObjectId) => {
   return UserModel.findById(id);
 };
 
+/**
+ * Updates the base currency preference for a specific user.
+ *
+ * @param id - The user ID as a string or ObjectId
+ * @param baseCurrency - The new 3-letter ISO base currency code (e.g. 'EUR', 'USD')
+ * @returns {Promise<User | null>} The updated user document, or null if user does not exist
+ */
 export const updateUserBaseCurrency = async (id: string | Types.ObjectId, baseCurrency: string) => {
   const user = await UserModel.findById(id);
   if (!user) {

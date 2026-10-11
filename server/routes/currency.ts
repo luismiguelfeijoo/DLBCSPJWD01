@@ -8,9 +8,19 @@ import {
 import { CurrenciesResponseSchema } from '../schemas/currency.schema.ts';
 import { DEFAULT_ERROR_RESPONSE, ErrorResponseSchema } from '../schemas/error.schema.ts';
 
+/**
+ * Currency Route Plugin
+ * Registers endpoints under `/currencies`:
+ * - GET /currencies - list all supported global currencies
+ * - GET /currencies/:baseCurrency/rates - fetch live or historical exchange rates
+ */
 const currencyRoutes = (fastify: FastifyInstance) => {
   const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
+  /**
+   * GET /currencies
+   * Fetches all supported currencies from the external exchange rate provider.
+   */
   server.get(
     '/',
     {
@@ -32,6 +42,11 @@ const currencyRoutes = (fastify: FastifyInstance) => {
     },
   );
 
+  /**
+   * GET /currencies/:baseCurrency/rates
+   * Fetches exchange rates for the given base currency.
+   * Supports filtering by target quote currency, specific date, or date range (`from`, `to`).
+   */
   server.get(
     '/:baseCurrency/rates',
     {

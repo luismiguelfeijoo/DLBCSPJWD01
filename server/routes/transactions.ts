@@ -13,10 +13,19 @@ import { DEFAULT_ERROR_RESPONSE, ErrorResponseSchema } from '../schemas/error.sc
 import type { FastifyInstance } from 'fastify';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 
+/**
+ * Transaction Route Plugin
+ * Registers endpoints under `/transactions`:
+ * - GET /transactions - list transactions filtered by user ID and optional type
+ * - POST /transactions - create a new transaction (sale or adjustment, returning 201 Created)
+ */
 const transactionRoutes = (fastify: FastifyInstance) => {
   const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
-  // GET /transactions - list transactions filtered by user and type
+  /**
+   * GET /transactions
+   * Queries transactions for a specified user ID, with optional filter by type ('sale' | 'adjustment').
+   */
   server.get(
     '/',
     {
@@ -49,7 +58,11 @@ const transactionRoutes = (fastify: FastifyInstance) => {
     },
   );
 
-  // POST /transactions - create a new transaction (201 Created)
+  /**
+   * POST /transactions
+   * Records a new transaction (either a sale or currency adjustment).
+   * Validates the payload against CreateTransactionSchema and returns 201 Created.
+   */
   server.post(
     '/',
     {

@@ -71,7 +71,7 @@ export const TransactionStore = signalStore(
     ),
   })),
   withMethods((store) => ({
-    setTargetCurrency: (targetCurrencyCode: string) => {
+    setTargetCurrency: (targetCurrencyCode?: string | null) => {
       patchState(store, {
         targetCurrency:
           store._currencyStore

@@ -46,23 +46,20 @@ const CUSTOM_RATE = {
   templateUrl: './transaction-form.component.html',
 })
 export class TransactionFormComponent implements OnInit, OnDestroy {
+  // Inputs
+  /** Determines form behavior: 'sale' (recording customer sale) or 'adjustment' (exchanging currency) */
   readonly mode = input.required<'sale' | 'adjustment'>();
   readonly defaultDescription = input<string>('');
   readonly currencies = input.required<Currency[]>();
   readonly baseCurrencies = input.required<Currency[]>();
 
-  readonly baseCurrencyLabel = computed(() => {
-    return this.mode() === 'sale' ? 'Price' : 'You exchange';
-  });
-
-  readonly currencyLabel = computed(() => {
-    return this.mode() === 'sale' ? 'Client pays' : 'You recieve';
-  });
-
+  // Dependencies / Injected Services
   private readonly transactionStore = inject(TransactionStore);
-
   private readonly fb = inject(FormBuilder);
   private readonly locale = inject(LOCALE_ID);
+
+  // State & Form Controls
+  private destroy$ = new Subject<void>();
 
   form = this.fb.group({
     description: [this.defaultDescription(), [Validators.maxLength(100)]],
@@ -75,51 +72,21 @@ export class TransactionFormComponent implements OnInit, OnDestroy {
     exchangeRate: [CUSTOM_RATE, [Validators.required]],
   });
 
-  private _formInitializer = effect(() => {
-    if (this.mode() === 'sale') {
-      // set the base currency to the user default currency
-      const baseCurrency = this.transactionStore.baseCurrency();
-      this.form.patchValue({ baseCurrency });
-    } else {
-      this.form.controls.baseCurrency.enable();
-      // set the target currency to user base currency
-      const baseCurrency = this.transactionStore.baseCurrency();
-      this.form.patchValue({ currency: baseCurrency });
-    }
-  });
-
+  // Signal bridge for reactive form base currency changes
   private baseCurrencySignal = toSignal(this.form.controls.baseCurrency.valueChanges);
 
-  private _ratesLoaderEffect = effect(() => {
-    const targetCurrency = this.transactionStore.targetCurrency();
-    if (this.mode() === 'sale') {
-      // load rates respectively for user base currency and target currency
-
-      const baseCurrency = this.transactionStore.baseCurrency()?.isoCode;
-      if (!targetCurrency?.isoCode || !baseCurrency) {
-        // this.transactionStore.setRates([]);
-        return;
-      }
-      this.transactionStore.loadRates({
-        baseCurrencyCode: baseCurrency,
-        targetCurrencyCode: targetCurrency.isoCode,
-      });
-    } else {
-      // load rates from selected base currency
-      const baseCurrency = this.baseCurrencySignal();
-      if (!targetCurrency?.isoCode || !baseCurrency?.isoCode) {
-        // this.transactionStore.setRates([]);
-        return;
-      }
-      this.transactionStore.loadRates({
-        baseCurrencyCode: baseCurrency.isoCode,
-        targetCurrencyCode: targetCurrency.isoCode,
-      });
-    }
+  // Computed Signals
+  /** Dynamic label for base currency field based on current mode */
+  readonly baseCurrencyLabel = computed(() => {
+    return this.mode() === 'sale' ? 'Price' : 'You exchange';
   });
 
-  private destroy$ = new Subject<void>();
+  /** Dynamic label for target currency field based on current mode */
+  readonly currencyLabel = computed(() => {
+    return this.mode() === 'sale' ? 'Client pays' : 'You recieve';
+  });
 
+  /** Computed list of exchange rates (custom manual rate + live historical rates) */
   rates = computed<Array<{ label: string } & Rate>>(() => [
     CUSTOM_RATE,
     ...this.transactionStore.rates().map((rate) => {
@@ -133,7 +100,50 @@ export class TransactionFormComponent implements OnInit, OnDestroy {
     }),
   ]);
 
+  // Effects
+  /** Initializes form fields based on whether current mode is 'sale' or 'adjustment' */
+  private _formInitializer = effect(() => {
+    if (this.mode() === 'sale') {
+      // For sales: base currency is locked to user default base currency
+      const baseCurrency = this.transactionStore.baseCurrency();
+      this.form.patchValue({ baseCurrency });
+      this.transactionStore.setTargetCurrency(null);
+    } else {
+      // For adjustments: allow selecting source currency; target is user base currency
+      this.form.controls.baseCurrency.enable();
+      const baseCurrency = this.transactionStore.baseCurrency();
+      this.form.patchValue({ currency: baseCurrency });
+      this.transactionStore.setTargetCurrency(baseCurrency?.isoCode);
+    }
+  });
+
+  /** Automatically loads live exchange rates when source and target currencies change */
+  private _ratesLoaderEffect = effect(() => {
+    const targetCurrency = this.transactionStore.targetCurrency();
+    if (this.mode() === 'sale') {
+      const baseCurrency = this.transactionStore.baseCurrency()?.isoCode;
+      if (!targetCurrency?.isoCode || !baseCurrency) {
+        return;
+      }
+      this.transactionStore.loadRates({
+        baseCurrencyCode: baseCurrency,
+        targetCurrencyCode: targetCurrency.isoCode,
+      });
+    } else {
+      const baseCurrency = this.baseCurrencySignal();
+      if (!targetCurrency?.isoCode || !baseCurrency?.isoCode) {
+        return;
+      }
+      this.transactionStore.loadRates({
+        baseCurrencyCode: baseCurrency.isoCode,
+        targetCurrencyCode: targetCurrency.isoCode,
+      });
+    }
+  });
+
+  // Lifecycle Hooks
   ngOnInit(): void {
+    // Dynamically calculate target amount when base amount changes based on selected rate
     this.form.controls.baseAmount.valueChanges
       .pipe(
         tap((baseAmount) => {
@@ -158,6 +168,8 @@ export class TransactionFormComponent implements OnInit, OnDestroy {
     this.destroy$.unsubscribe();
   }
 
+  // Methods
+  /** Resets form controls to default state */
   resetForm() {
     this.form.reset({
       description: '',

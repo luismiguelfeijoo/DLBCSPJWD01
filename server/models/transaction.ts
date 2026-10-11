@@ -103,6 +103,14 @@ const transactionSchema = new Schema(
 export const TransactionModel = model<Transaction>('Transaction', transactionSchema);
 
 // Queries for data processing
+
+/**
+ * Retrieves transactions for a given user, optionally filtered by transaction type.
+ *
+ * @param userId - The user ID as a string or ObjectId
+ * @param type - Optional filter for transaction type ('sale' | 'adjustment')
+ * @returns {Promise<Transaction[]>} Array of matching transaction documents
+ */
 export const getTransactionsByUserId = async (userId: string | Types.ObjectId, type?: string) => {
   const userObjectId = typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
   const filter: Record<string, any> = { userId: userObjectId };
@@ -113,15 +121,23 @@ export const getTransactionsByUserId = async (userId: string | Types.ObjectId, t
 };
 
 /**
- * Get user balances
- * @param userId - Id of the user
- * @returns {@link Promise<BalanceSummary[]>} - Object with balances by currency
+ * Calculates current net balances per currency for a specific user.
+ *
+ * Logic:
+ * 1. Aggregates total sales revenue per received currency (sum of `amount`).
+ * 2. Aggregates total adjustments exchanged out of that currency (sum of `baseAmount`,
+ *    where `baseCurrency` indicates the currency surrendered during adjustment).
+ * 3. Subtracts adjustment deductions from total sales to determine the remaining net balance.
+ *
+ * @param userId - ID of the user
+ * @returns {Promise<BalanceSummary[]>} List of currency balances with net totals
  */
 export const getUserBalances = async (
   userId: string | Types.ObjectId,
 ): Promise<BalanceSummary[]> => {
   const userObjectId = typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
 
+  // Step 1: Aggregate total received sales amounts grouped by currency
   const sales = await TransactionModel.aggregate<{
     userId: Types.ObjectId;
     currency: string;
@@ -133,7 +149,6 @@ export const getUserBalances = async (
       },
     },
     {
-      // Group primarily by currency
       $group: {
         _id: {
           userId: '$userId',
@@ -157,6 +172,8 @@ export const getUserBalances = async (
     },
   ]);
 
+  // Step 2: Aggregate total adjustments where the currency was exchanged out
+  // In an adjustment, 'baseCurrency' is the source currency being sold/reduced
   const adjustments = await TransactionModel.aggregate<{
     userId: Types.ObjectId;
     currency: string;
@@ -169,7 +186,6 @@ export const getUserBalances = async (
       },
     },
     {
-      // Group primarily by currency
       $group: {
         _id: {
           userId: '$userId',
@@ -193,6 +209,7 @@ export const getUserBalances = async (
     },
   ]);
 
+  // Step 3: Compute net balance per currency: Net = Sales - Adjustments
   return sales.map((sale) => {
     const adjustmentAmount = adjustments.reduce(
       (acc, adjustment) =>
@@ -207,9 +224,10 @@ export const getUserBalances = async (
 };
 
 /**
- * Get distinct currencies by user Id
- * @param userId - Id of the user
- * @returns {@link Promise<string[]>}
+ * Retrieves the distinct list of foreign currency codes used in transactions by a specific user.
+ *
+ * @param userId - ID of the user
+ * @returns {Promise<string[]>} Array of distinct ISO currency codes
  */
 export const getDistinctCurrenciesByUserId = async (userId: string | Types.ObjectId) => {
   const userObjectId = typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
@@ -220,10 +238,17 @@ export const getDistinctCurrenciesByUserId = async (userId: string | Types.Objec
 };
 
 /**
- * Get transaction adjustments grouped by currency and date
- * transformed as an object of rate exchanges by date
- * @param userId - Id of the user
- * @returns {@link Promise<CurrencyDataByDate>} - Object with rate exchanges by date
+ * Aggregates adjustment transactions grouped by currency pair (`baseCurrency-currency`) and date.
+ * Computes daily sums of `amount` and `baseAmount`, as well as the effective daily applied rate.
+ *
+ * Logic:
+ * 1. Filters adjustments for the target user.
+ * 2. Groups by baseCurrency, target currency, and formatted date (YYYY-MM-DD).
+ * 3. Computes effective rate per day via `$divide: [totalAmount, totalBaseAmount]`.
+ * 4. Transforms the database array into a structured dictionary: `{ [pairKey]: { [date]: dayData } }`.
+ *
+ * @param userId - ID of the user
+ * @returns {Promise<CurrencyDataByDate>} Nested map of currency pairs to daily transaction data
  */
 export const getAdjustmentsByUserIdGroupedByCurrencyByDate = async (
   userId: string | Types.ObjectId,
@@ -245,13 +270,12 @@ export const getAdjustmentsByUserIdGroupedByCurrencyByDate = async (
     },
     {
       $group: {
-        // group by base currency, currency and date
+        // Group by source currency, target currency, and date string (YYYY-MM-DD)
         _id: {
           baseCurrency: '$baseCurrency',
           currency: '$currency',
           dateStr: { $dateToString: { format: '%Y-%m-%d', date: '$date' } },
         },
-        // Total amounts of the specific day
         totalAmount: { $sum: '$amount' },
         totalBaseAmount: { $sum: '$baseAmount' },
       },
@@ -264,17 +288,18 @@ export const getAdjustmentsByUserIdGroupedByCurrencyByDate = async (
         date: '$_id.dateStr',
         amount: '$totalAmount',
         baseAmount: '$totalBaseAmount',
-        // Effective daily applied rate = totalAmount / totalBaseAmount
+        // Effective daily applied exchange rate = total received amount / total base amount exchanged
         appliedRate: { $divide: ['$totalAmount', '$totalBaseAmount'] },
       },
     },
   ]);
-  // map data to object for simplicity
 
+  // Transform MongoDB flat aggregation results into structured object:
+  // { 'USD-EUR': { '2026-03-01': { amount, baseAmount, appliedRate } } }
   return adjustmentsByDate.reduce((acc, current) => {
     const { baseCurrency, currency, date, amount, baseAmount, appliedRate } = current;
     const currencyKey = `${baseCurrency}-${currency}`;
-    // get existing currency, to add data by date
+
     let currencyData = acc[currencyKey];
     if (!currencyData) {
       // if not exist create an empty object
@@ -288,7 +313,6 @@ export const getAdjustmentsByUserIdGroupedByCurrencyByDate = async (
     };
 
     acc[currencyKey] = currencyData;
-
     return acc;
   }, {} as CurrencyDataByDate);
 };

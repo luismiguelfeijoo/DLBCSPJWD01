@@ -25,11 +25,17 @@ import { ExchangeRateComparisionGraphComponent } from './exchange-rate-comparisi
   providers: [ExchangeRateStore],
 })
 export class AnalyticsComponent {
+  // Dependencies / Injected Services
   private transactionStore = inject(TransactionStore);
   private currencyStore = inject(CurrencyStore);
-
   private dialog = inject(MatDialog);
   private injector = inject(Injector);
+
+  // Computed Signals
+  /**
+   * Filters currencies to only those currently held with positive/existing balances,
+   * excluding the user's primary base currency. Used as options for adjustment source currency.
+   */
   private currencies = computed(() =>
     this.currencyStore
       .currencies()
@@ -42,6 +48,11 @@ export class AnalyticsComponent {
       ),
   );
 
+  // Methods
+  /**
+   * Opens the TransactionFormComponent modal in 'adjustment' mode, passing available currencies.
+   * Tracks transactionStore.isSaving via an effect to auto-close the modal upon successful save.
+   */
   openNewAdjustment() {
     const dialogRef = this.dialog.open(TransactionFormComponent, {
       height: '80vh',

@@ -12,9 +12,15 @@ import { TransactionStore } from '../../../core/store/transaction.store';
   `,
 })
 export class ExchangeRateComparisionGraphComponent {
+  // Dependencies / Injected Services
   private transactionStore = inject(TransactionStore);
   private currencyStore = inject(CurrencyStore);
 
+  // Computed Signals
+  /**
+   * Transforms currency disparity metrics from store into results format
+   * required by ngx-charts-bar-horizontal (`[{ name, value }]`).
+   */
   data = computed(() =>
     this.transactionStore.disparities().map((disparity) => {
       const currency = this.currencyStore

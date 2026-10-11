@@ -15,12 +15,18 @@ import { TransactionFormComponent } from '../transaction-form/transaction-form.c
   templateUrl: './sales.component.html',
 })
 export class SalesComponent {
+  // Dependencies / Injected Services
   private transactionStore = inject(TransactionStore);
   private currencyStore = inject(CurrencyStore);
   private userStore = inject(UserStore);
   private dialog = inject(MatDialog);
   private injector = inject(Injector);
 
+  // Component State & Properties
+  displayedColumns = ['date', 'description', 'amount', 'currency', 'exchangeRate'];
+
+  // Computed Signals
+  /** Enriches raw sales transactions with currency symbols and exchange rate display labels */
   sales = computed(() =>
     this.transactionStore.sales().map((sale) => {
       const currency = this.currencyStore.currencies().find((c) => c.isoCode === sale.currency);
@@ -35,8 +41,12 @@ export class SalesComponent {
       };
     }),
   );
-  displayedColumns = ['date', 'description', 'amount', 'currency', 'exchangeRate'];
 
+  // Methods
+  /**
+   * Opens TransactionFormComponent modal in 'sale' mode.
+   * Uses an effect bound to transactionStore.isSaving to auto-close the modal upon completion.
+   */
   openNewSale() {
     const dialogRef = this.dialog.open(TransactionFormComponent, {
       height: '80vh',

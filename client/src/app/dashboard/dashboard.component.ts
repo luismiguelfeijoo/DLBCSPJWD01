@@ -36,40 +36,42 @@ import { CurrencyStore } from '../core/store/currency.store';
   providers: [CurrencyService, TransactionService, CurrencyStore, TransactionStore],
 })
 export class DashboardComponent {
+  // Dependencies / Injected Services
   private userStore = inject(UserStore);
-  private transactionStore = inject(TransactionStore);
   private currencyStore = inject(CurrencyStore);
-
   private router = inject(Router);
-
-  selectedUser = this.userStore.selectedUser;
-  currencies = this.currencyStore.currencies;
-  userBaseCurrency = computed(() => this.selectedUser()?.baseCurrency);
-  currencyControl = new FormControl<string | null>(null);
-
   private breakpointObserver = inject(BreakpointObserver);
 
-  // Tailwind 'sm' breakpoint is 640px (< 640px is small screen / mobile)
+  // Component State & Properties
+  selectedUser = this.userStore.selectedUser;
+  currencies = this.currencyStore.currencies;
+  currencyControl = new FormControl<string | null>(null);
+
+  /** Tracks router NavigationEnd events as a signal */
+  private currentRouteEvent = toSignal(
+    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)),
+  );
+
+  /** Responsive screen size detector (true if width < 640px) */
   readonly isSmallScreen = toSignal(
     this.breakpointObserver.observe('(max-width: 639px)').pipe(map((res) => res.matches)),
     { initialValue: window?.innerWidth < 640 },
   );
 
-  // Signals for local UI state
+  /** Responsive sidebar drawer state */
   readonly isDrawerOpen = signal<boolean>(!this.isSmallScreen());
 
-  // Navigation Items Config
+  /** Navigation sidebar links configuration */
   readonly navItems = [
     { path: '/dashboard/sales', label: 'Sales', icon: 'point_of_sale' },
     { path: '/dashboard/analytics', label: 'Analytics & History', icon: 'bar_chart' },
   ];
 
-  // Convert Router events into an Angular Signal using `toSignal`
-  private currentRouteEvent = toSignal(
-    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)),
-  );
+  // Computed Signals
+  /** Active user base currency ISO code */
+  userBaseCurrency = computed(() => this.selectedUser()?.baseCurrency);
 
-  // Computed Signal
+  /** Dynamically resolves header title based on active router URL */
   readonly currentPageTitle = computed(() => {
     this.currentRouteEvent();
     const currentPath = this.router.url;
@@ -78,30 +80,36 @@ export class DashboardComponent {
   });
 
   // Effects
+  /** Syncs toolbar currency dropdown with user's base currency in store */
   private _currencyWatcher = effect(() => {
     this.currencyControl.setValue(this.userBaseCurrency() || null, { emitEvent: false });
   });
 
+  /** Auto-closes drawer on mobile and opens on desktop */
   private _responsiveDrawerWatcher = effect(() => {
     const isSmall = this.isSmallScreen();
     this.isDrawerOpen.set(!isSmall);
   });
 
+  // Methods
+  /** Updates active user's base currency via store */
   onCurrencyChange(currency: string): void {
     this.userStore.setBaseCurrency(currency);
   }
 
-  // Action Methods using Signals
+  /** Toggles sidenav drawer open/close state */
   toggleDrawer(): void {
     this.isDrawerOpen.update((state) => !state);
   }
 
+  /** Handles nav item clicks, collapsing drawer on small screens */
   onNavItemClick(): void {
     if (this.isSmallScreen()) {
       this.isDrawerOpen.set(false);
     }
   }
 
+  /** Clears active user session and redirects to login */
   logout(): void {
     this.userStore.selectUser(null);
     this.router.navigate(['/login']);
