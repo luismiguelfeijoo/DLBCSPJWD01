@@ -5,11 +5,12 @@ import { Currency } from '../model/currency.model';
 import { CurrencyDTO } from '../model/dto/currency.dto.model';
 import { RateDTO } from '../model/dto/rate.dto.model';
 import { Rate } from '../model/rate.model';
+import { API_URL } from '../tokens/api-url.token';
 
 @Service()
 export class CurrencyService {
   private httpClient = inject(HttpClient);
-  private baseUrl = 'http://localhost:3000';
+  private baseUrl = inject(API_URL);
 
   getCurrencies(): Observable<Currency[]> {
     return this.httpClient

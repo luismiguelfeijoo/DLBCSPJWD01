@@ -22,7 +22,26 @@ Install all workspace dependencies from the root repository:
 npm install
 ```
 
-### 2. Run the Application
+### 2. Environment Configuration
+
+Create a `.env` file in the `server/` directory
+
+Ensure the following variables are defined in `server/.env`:
+
+```env
+MONGODB_URI=<mongo db connection string>
+EXCHANGE_API_URL=https://api.frankfurter.dev
+ALLOWED_ORIGINS=http://localhost:4200
+```
+
+> **Note on MongoDB Connection:**
+> - Set `MONGODB_URI` to the supplied MongoDB Atlas connection string on the submission form.
+> - If you do not need to connect to MongoDB Atlas and prefer running against a local MongoDB instance (e.g., `mongodb://127.0.0.1:27017/exchange-app`), you can automatically seed the database with initial users using the populate script:
+>   ```bash
+>   npm run populate --workspace=server
+>   ```
+
+### 3. Run the Application
 
 #### Run Both Client and Server Concurrently (Recommended)
 
@@ -104,6 +123,8 @@ The frontend is an Angular standalone application organized into a foundational 
   TypeScript domain interfaces, entities, and data transfer objects (DTOs) for users, transactions, currencies, rates, balances, and disparities.
 - **`service/`**  
   Angular HTTP services wrapping backend REST endpoints (`UserService`, `TransactionService`, `CurrencyService`).
+- **`tokens/`**  
+  Dependency injection tokens (e.g., `api-url.token.ts` for configuring the backend API base URL).
 - **`store/`**  
   NgRx SignalStores (`@ngrx/signals`) managing reactive state:
   - `UserStore`: Active user and base currency selection.

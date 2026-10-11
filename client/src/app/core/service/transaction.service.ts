@@ -4,11 +4,12 @@ import { Observable } from 'rxjs';
 import { Transaction } from '../model/transaction.model';
 import { Balance } from '../model/balance.model';
 import { ExchangeDisparity } from '../model/exchange-disparity';
+import { API_URL } from '../tokens/api-url.token';
 
 @Service()
 export class TransactionService {
   private httpClient = inject(HttpClient);
-  private baseUrl = 'http://localhost:3000';
+  private baseUrl = inject(API_URL);
 
   getUserSales(userId: string): Observable<Transaction[]> {
     return this.getUserTransactions(userId, 'sale');
