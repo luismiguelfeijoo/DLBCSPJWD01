@@ -1,7 +1,7 @@
 <div class="w-full mx-auto p-6">
   <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
     <mat-icon class="text-slate-600">receipt_long</mat-icon>
-    New Transaction
+    {{ title() }}
   </h2>
 
   <form [formGroup]="form" (ngSubmit)="onSave()" class="flex flex-col gap-4">
@@ -10,7 +10,7 @@
       <input
         matInput
         formControlName="description"
-        [placeholder]="mode() === 'sale' ? 'Product x' : 'Currency adjustment'"
+        [placeholder]="placeholder()"
       />
       <mat-icon matSuffix>description</mat-icon>
       @if (form.controls.description.hasError('maxlength')) {
@@ -57,7 +57,7 @@
             <mat-option [value]="currency">{{ currency.isoCode }}</mat-option>
           }
         </mat-select>
-        @if (form.controls.currency.hasError('required')) {
+        @if (form.controls.baseCurrency.hasError('required')) {
           <mat-error>Select currency</mat-error>
         }
       </mat-form-field>
@@ -86,7 +86,7 @@
 
     <div class="grid grid-cols-3 gap-1 sm:grid-cols-4 sm:gap-4">
       <mat-form-field appearance="outline" class="col-span-1 sm:col-span-1">
-        <mat-select formControlName="currency" (selectionChange)="onCurrencyChange($event.value)">
+        <mat-select formControlName="currency">
           @for (currency of currencies(); track currency.isoCode) {
             <mat-option [value]="currency">{{ currency.isoCode }}</mat-option>
           }
@@ -137,9 +137,14 @@
 
     <div class="flex justify-end gap-3 mt-4">
       <button type="button" mat-button (click)="resetForm()">Reset</button>
-      <button type="submit" mat-flat-button color="primary" [disabled]="form.invalid">
+      <button
+        type="submit"
+        mat-flat-button
+        color="primary"
+        [disabled]="form.invalid || isSaving()"
+      >
         <mat-icon class="mr-1">add</mat-icon>
-        Save Transaction
+        {{ isSaving() ? 'Saving...' : 'Save Transaction' }}
       </button>
     </div>
   </form>
