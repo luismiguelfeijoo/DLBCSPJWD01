@@ -10,26 +10,20 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, pipe, switchMap, tap } from 'rxjs';
-import { Currency } from '../model/currency.model';
-import { Rate } from '../model/rate.model';
-import { Transaction } from '../model/transaction.model';
-import { CurrencyService } from '../service/currency.service';
-import { TransactionService } from '../service/transaction.service';
-import { UserStore } from './user.store';
+import { pipe, switchMap, tap } from 'rxjs';
 import { Balance } from '../model/balance.model';
-import { CurrencyStore } from './currency.store';
 import { ExchangeDisparity } from '../model/exchange-disparity';
+import { Transaction } from '../model/transaction.model';
+import { TransactionService } from '../service/transaction.service';
+import { CurrencyStore } from './currency.store';
+import { UserStore } from './user.store';
 
 type TransactionsState = {
   sales: Transaction[];
   adjustments: Transaction[];
-  targetCurrency: Currency | null;
-  rates: Rate[];
   balances: Balance[];
   disparities: ExchangeDisparity[];
   isLoadingBalances: boolean;
-  isLoadingRates: boolean;
   isLoadingSales: boolean;
   isLoadingAdjustments: boolean;
   isLoadingDisparities: boolean;
@@ -39,12 +33,9 @@ type TransactionsState = {
 const initialState: TransactionsState = {
   sales: [],
   adjustments: [],
-  targetCurrency: null,
-  rates: [],
   balances: [],
   disparities: [],
   isLoadingBalances: false,
-  isLoadingRates: false,
   isLoadingSales: false,
   isLoadingAdjustments: false,
   isLoadingDisparities: false,
@@ -57,11 +48,9 @@ export const TransactionStore = signalStore(
     (
       _,
       _transactionService = inject(TransactionService),
-      _currencyService = inject(CurrencyService),
-
       _currencyStore = inject(CurrencyStore),
       _userStore = inject(UserStore),
-    ) => ({ _transactionService, _currencyService, _currencyStore, _userStore }),
+    ) => ({ _transactionService, _currencyStore, _userStore }),
   ),
   withComputed(({ _userStore, _currencyStore }) => ({
     baseCurrency: computed(() =>
@@ -71,14 +60,6 @@ export const TransactionStore = signalStore(
     ),
   })),
   withMethods((store) => ({
-    setTargetCurrency: (targetCurrencyCode?: string | null) => {
-      patchState(store, {
-        targetCurrency:
-          store._currencyStore
-            .currencies()
-            ?.find((currency) => currency.isoCode === targetCurrencyCode) || null,
-      });
-    },
     loadSales: rxMethod<string>(
       pipe(
         tap(() => {
@@ -94,6 +75,7 @@ export const TransactionStore = signalStore(
                 });
               },
               error: (error) => {
+                console.error('Failed to load sales', error);
                 patchState(store, { isLoadingSales: false });
               },
             }),
@@ -104,19 +86,20 @@ export const TransactionStore = signalStore(
     loadAdjustments: rxMethod<string>(
       pipe(
         tap(() => {
-          patchState(store, { isLoadingSales: true });
+          patchState(store, { isLoadingAdjustments: true });
         }),
         switchMap((userId) =>
           store._transactionService.getUserAdjustments(userId).pipe(
             tapResponse({
               next: (transactions) => {
                 patchState(store, {
-                  isLoadingSales: false,
+                  isLoadingAdjustments: false,
                   adjustments: transactions,
                 });
               },
               error: (error) => {
-                patchState(store, { isLoadingSales: false });
+                console.error('Failed to load adjustments', error);
+                patchState(store, { isLoadingAdjustments: false });
               },
             }),
           ),
@@ -138,6 +121,7 @@ export const TransactionStore = signalStore(
                 });
               },
               error: (error) => {
+                console.error('Failed to load balances', error);
                 patchState(store, { isLoadingBalances: false });
               },
             }),
@@ -160,42 +144,12 @@ export const TransactionStore = signalStore(
                 });
               },
               error: (error) => {
+                console.error('Failed to load disparities', error);
                 patchState(store, { isLoadingDisparities: false });
               },
             }),
           ),
         ),
-      ),
-    ),
-    loadRates: rxMethod<{ targetCurrencyCode: string; baseCurrencyCode: string }>(
-      pipe(
-        tap(() => {
-          patchState(store, { isLoadingRates: true });
-        }),
-        switchMap(({ targetCurrencyCode, baseCurrencyCode }) => {
-          const fromDate = new Date();
-          fromDate.setDate(fromDate.getDate() - 7);
-          return store._currencyService
-            .getExchangeRates(baseCurrencyCode, {
-              targetCurrency: targetCurrencyCode,
-              from: fromDate.toISOString().split('T')[0],
-            })
-            .pipe(
-              tapResponse({
-                next: (rates) => {
-                  patchState(store, {
-                    isLoadingRates: false,
-                    rates: rates.sort(
-                      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-                    ),
-                  });
-                },
-                error: (error) => {
-                  patchState(store, { isLoadingRates: false });
-                },
-              }),
-            );
-        }),
       ),
     ),
   })),
@@ -237,6 +191,7 @@ export const TransactionStore = signalStore(
                     store._loadDisparities(store._userStore.selectedUser()?.id!);
                   },
                   error: (error) => {
+                    console.error('Failed to create sale', error);
                     patchState(store, { isSaving: false });
                   },
                 }),
@@ -281,6 +236,7 @@ export const TransactionStore = signalStore(
                     store._loadDisparities(store._userStore.selectedUser()?.id!);
                   },
                   error: (error) => {
+                    console.error('Failed to create adjustment', error);
                     patchState(store, { isSaving: false });
                   },
                 }),

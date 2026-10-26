@@ -16,6 +16,7 @@ import { TransactionService } from '../core/service/transaction.service';
 import { TransactionStore } from '../core/store/transaction.store';
 import { UserStore } from '../core/store/user.store';
 import { CurrencyStore } from '../core/store/currency.store';
+import { TransactionFormStore } from '../core/store/transaction-form.store';
 
 @Component({
   selector: 'app-dashboard',
@@ -33,7 +34,13 @@ import { CurrencyStore } from '../core/store/currency.store';
     ReactiveFormsModule,
   ],
   templateUrl: './dashboard.component.html',
-  providers: [CurrencyService, TransactionService, CurrencyStore, TransactionStore],
+  providers: [
+    CurrencyService,
+    TransactionService,
+    CurrencyStore,
+    TransactionStore,
+    TransactionFormStore,
+  ],
 })
 export class DashboardComponent {
   // Dependencies / Injected Services

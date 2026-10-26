@@ -1,13 +1,15 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, Injector } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { CurrencyStore } from '../../core/store/currency.store';
+import { TransactionFormStore } from '../../core/store/transaction-form.store';
 import { TransactionStore } from '../../core/store/transaction.store';
 import { UserStore } from '../../core/store/user.store';
 import { TransactionFormComponent } from '../transaction-form/transaction-form.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-sales',
@@ -17,6 +19,7 @@ import { TransactionFormComponent } from '../transaction-form/transaction-form.c
 export class SalesComponent {
   // Dependencies / Injected Services
   private transactionStore = inject(TransactionStore);
+  private transactionFormStore = inject(TransactionFormStore);
   private currencyStore = inject(CurrencyStore);
   private userStore = inject(UserStore);
   private dialog = inject(MatDialog);
@@ -24,6 +27,24 @@ export class SalesComponent {
 
   // Component State & Properties
   displayedColumns = ['date', 'description', 'amount', 'currency', 'exchangeRate'];
+  private dialogRef: MatDialogRef<TransactionFormComponent> | null = null;
+  private saveStarted = false;
+
+  // Effects
+  /**
+   * Tracks transactionFormStore.isSaving via an effect to auto-close the modal upon successful save.
+   */
+  private _closeOnSaveEffect = effect(() => {
+    if (this.transactionFormStore.isSaving()) {
+      this.saveStarted = true;
+      return;
+    }
+    if (this.saveStarted && !this.transactionFormStore.isSaving()) {
+      this.saveStarted = false;
+      this.dialogRef?.close();
+      this.dialogRef = null;
+    }
+  });
 
   // Computed Signals
   /** Enriches raw sales transactions with currency symbols and exchange rate display labels */
@@ -45,40 +66,25 @@ export class SalesComponent {
   // Methods
   /**
    * Opens TransactionFormComponent modal in 'sale' mode.
-   * Uses an effect bound to transactionStore.isSaving to auto-close the modal upon completion.
    */
-  openNewSale() {
-    const dialogRef = this.dialog.open(TransactionFormComponent, {
+  openNewSale(): void {
+    this.transactionFormStore.initForm({
+      mode: 'sale',
+      defaultDescription: '',
+      baseCurrencies: this.currencyStore
+        .currencies()
+        .filter((currency) => this.userStore.selectedUser()?.baseCurrency === currency.isoCode),
+    });
+
+    this.dialogRef = this.dialog.open(TransactionFormComponent, {
       height: '80vh',
       width: '80vw',
-      // maxWidth: '80vw',
       injector: this.injector,
     });
 
-    dialogRef.componentRef?.setInput('mode', 'sale');
-    dialogRef.componentRef?.setInput('currencies', this.currencyStore.currencies());
-    dialogRef.componentRef?.setInput(
-      'baseCurrencies',
-      this.currencyStore
-        .currencies()
-        .filter((currency) => this.userStore.selectedUser()?.baseCurrency === currency.isoCode),
-    );
-
-    let saveStarted = false;
-    const saveEffect = effect(
-      (result) => {
-        if (this.transactionStore.isSaving()) {
-          saveStarted = true;
-          return;
-        }
-        if (saveStarted && !this.transactionStore.isSaving()) {
-          dialogRef.close();
-        }
-      },
-      { injector: this.injector },
-    );
-    dialogRef.afterClosed().subscribe((result) => {
-      saveEffect.destroy();
+    this.dialogRef.afterClosed().pipe(takeUntilDestroyed()).subscribe(() => {
+      this.dialogRef = null;
+      this.saveStarted = false;
     });
   }
 }
